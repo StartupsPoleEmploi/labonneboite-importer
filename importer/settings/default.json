@@ -1,0 +1,4 @@
+{
+  "data_path": "/var/input",
+  "etab_file_glob": "lbb-output-wf-*"
+}

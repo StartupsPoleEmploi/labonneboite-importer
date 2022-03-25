@@ -58,3 +58,7 @@ set -ex
 mkdir -p /sources/airflow/opt/airflow/logs
 chown -R "${AIRFLOW_UID}:0" /sources/airflow/opt/airflow/logs
 /entrypoint airflow version
+/entrypoint airflow variables import /sources/importer/settings/default.json;
+/entrypoint airflow variables import /sources/importer/settings/docker.json;
+/entrypoint airflow connections list --conn-id fs_default | grep fs_default \
+    || /entrypoint airflow connections add fs_default --conn-type fs
