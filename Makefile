@@ -1,4 +1,10 @@
-init: init-airflow
+AIRFLOW_TEST_ENV= \
+	AIRFLOW_HOME=${PWD}/airflow \
+	AIRFLOW__CORE__DAGS_FOLDER=${PWD}/importer/dags \
+	AIRFLOW__CORE__PLUGINS_FOLDER=${PWD}/importer/plugins
+TEST_FILES ?= importer
+TEST_COV_ARGS ?= --cov importer --cov-fail-under  90
+TEST_ARGS ?= ${TEST_COV_ARGS}
 
 VIRTUAL_ENV ?= ${PWD}/venv
 PYTHON = ${VIRTUAL_ENV}/bin/python
@@ -47,6 +53,23 @@ init-pip: ${PYTHON}
 startserver:  ## Start local servers
 	docker-compose up --detach
 
+
+# Testing
+# -------
+
+test: test-init test-run  ## Init and run tests
+
+test-run:  ## Run tests
+	${AIRFLOW_TEST_ENV} pytest --import-mode importlib ${TEST_ARGS} ${TEST_FILES}
+
+test-init: init-venv test-init-db test-init-variables  ## Init tests
+
+test-init-db:
+	${AIRFLOW_TEST_ENV} airflow db reset --yes
+
+test-init-variables:
+	${AIRFLOW_TEST_ENV} airflow variables import ./importer/settings/default.json
+	${AIRFLOW_TEST_ENV} airflow variables import ./importer/settings/local.json
 
 # Python virtual env
 # ------------------
