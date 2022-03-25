@@ -1,8 +1,9 @@
 import glob
 import os
 from operator import itemgetter
-from typing import Dict, Iterable, Iterator, Tuple, Optional
+from typing import Iterable, Iterator, Tuple, Optional
 
+from common.types import Context
 from pendulum import DateTime, UTC
 
 from airflow.hooks.filesystem import FSHook
@@ -11,8 +12,6 @@ from airflow.exceptions import AirflowSkipException
 
 TimeIntervale = Tuple[DateTime, DateTime]
 
-
-Context = Dict
 
 class FindLastFileOperator(BaseOperator):
     """
