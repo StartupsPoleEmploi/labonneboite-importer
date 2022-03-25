@@ -4,6 +4,7 @@ import os
 from airflow.models import Variable
 from airflow.operators.dummy import DummyOperator
 from airflow.sensors.filesystem import FileSensor
+from airflow.operators.bash import BashOperator
 
 from airflow import DAG
 
@@ -37,6 +38,10 @@ with DAG("load-etablissements-2022-03",
         task_id='untar_last_tar',
         source_path="{{ task_instance.xcom_pull(task_ids='find_last_tar', key='return_value') }}",
         dest_path=working_tmp_dir)
+
+    rmdir = BashOperator(task_id='delete_result_directory',
+                         bash_command='rm -r ${WORKING_TMP_DIR}',
+                         env={'WORKING_TMP_DIR': working_tmp_dir})
     end_task = DummyOperator(task_id="end")
 
 
@@ -44,4 +49,6 @@ start_task \
     >> sensor_task \
     >> find_last_file \
     >> untar_last_file \
+    \
+    >> rmdir \
     >> end_task
