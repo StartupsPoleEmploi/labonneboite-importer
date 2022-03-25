@@ -6,10 +6,9 @@ from unittest.mock import MagicMock, Mock
 
 from operators.find_last_file import FindLastFileOperator
 
-from airflow.exceptions import AirflowFailException
-from airflow.configuration import AirflowConfigParser
+from airflow.exceptions import AirflowSkipException
 from airflow.hooks.filesystem import FSHook
-from airflow import macros, models
+from airflow import models
 from common.types import Context
 from pendulum import DateTime, UTC
 from datetime import timedelta
@@ -47,9 +46,8 @@ class TestUntarOperator(TestCase):
     def test_empty_dir(self):
         with tempfile.TemporaryDirectory() as filepath:
             MockFSHook = MagicMock(FSHook, get_path=Mock(return_value="/"))
-            dag = MagicMock(models.DAG, start_date=START_DATE)
             operator = FindLastFileOperator(filepath=filepath, _fshook=MockFSHook, task_id='test_task_id')
-            with self.assertRaises(AirflowFailException):
+            with self.assertRaises(AirflowSkipException):
                 operator.execute(self._get_context())
 
     def touch_file(self, path: str, datetime: DateTime):
@@ -59,31 +57,28 @@ class TestUntarOperator(TestCase):
 
     def test_without_files_in_data_interval(self):
         with tempfile.TemporaryDirectory() as filepath:
-            MockFSHook = MagicMock(FSHook, get_path=Mock(return_value="/"))
             self.touch_file(join(filepath, 'not_matching_glob.csv'), DATE_BETWEEN_LAST_RUN_AND_CURRENT_RUN)
             self.touch_file(join(filepath, 'test_before_start.csv'), DATE_BEFORE_START)
             self.touch_file(join(filepath, 'test_before_last_run.csv'), DATE_BETWEEN_START_AND_LAST_RUN)
             self.touch_file(join(filepath, 'test_after.csv'), DATE_AFTER_START)
             operator = FindLastFileOperator(task_id="test_operation", filepath=join(filepath, 'test_*.csv'))
-            with self.assertRaises(AirflowFailException):
+            with self.assertRaises(AirflowSkipException):
                 result = operator.execute(self._get_context())
                 self.fail('shouldn\'t return : %r', result)
 
     def test_1st_run_without_files_in_data_interval(self):
         with tempfile.TemporaryDirectory() as filepath:
-            MockFSHook = MagicMock(FSHook, get_path=Mock(return_value="/"))
             self.touch_file(join(filepath, 'not_matching_glob.csv'), DATE_BETWEEN_LAST_RUN_AND_CURRENT_RUN)
             self.touch_file(join(filepath, 'test_before_start.csv'), DATE_BEFORE_START)
             self.touch_file(join(filepath, 'test_after.csv'), DATE_AFTER_START)
             operator = FindLastFileOperator(task_id="test_operation", filepath=join(filepath, 'test_*.csv'))
 
-            with self.assertRaises(AirflowFailException):
+            with self.assertRaises(AirflowSkipException):
                 result = operator.execute(self._get_1st_run_context())
                 self.fail('shouldn\'t return : %r', result)
 
     def test_1st_run(self):
         with tempfile.TemporaryDirectory() as filepath:
-            MockFSHook = MagicMock(FSHook, get_path=Mock(return_value="/"))
             expected_result = join(filepath, 'test_after_start.csv')
             self.touch_file(expected_result, DATE_BETWEEN_START_AND_LAST_RUN)
             operator = FindLastFileOperator(task_id="test_operation", filepath=join(filepath, 'test_*.csv'))
@@ -97,7 +92,6 @@ class TestUntarOperator(TestCase):
 
     def test(self):
         with tempfile.TemporaryDirectory() as filepath:
-            MockFSHook = MagicMock(FSHook, get_path=Mock(return_value="/"))
             self.touch_file(join(filepath, 'test_before.csv'), DATE_BETWEEN_START_AND_LAST_RUN)
             self.touch_file(join(filepath, 'test_1.csv'), DATE_BETWEEN_LAST_RUN_AND_CURRENT_RUN - timedelta(minutes=1))
             expected_result = join(filepath, 'test_2.csv')
