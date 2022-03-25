@@ -19,4 +19,26 @@ This projet use an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load)
 
 ### dev
 
-- python3.8
+- pyenv
+  - python3.8.13 (installé via `make init`)
+- lib de dev (ou `devel`)
+  - sqlite3 (`libsqlite3-dev`)
+  - mysqlclient (`libmysqlclient-dev`)
+  - ffi (`libffi-dev`)
+- gcc-11 (pour installer compiler python avec la `libffi`)
+
+## Developement
+
+init local env :
+
+```
+make init
+```
+
+start local env :
+
+```
+make startserver
+```
+
+access : https://127.0.0.1/ (HTTP_PORT may be changed in .env)

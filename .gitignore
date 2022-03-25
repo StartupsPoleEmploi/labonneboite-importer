@@ -3,3 +3,8 @@ nginx/etc/nginx/auth/.htpasswd
 nginx/var/log
 airflow/
 postgres/
+__pycache__
+*.pyc
+
+venv/
+.installed-python-version
