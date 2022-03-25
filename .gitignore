@@ -8,3 +8,4 @@ __pycache__
 
 venv/
 .installed-python-version
+.coverage
