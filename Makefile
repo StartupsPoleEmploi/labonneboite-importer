@@ -113,3 +113,32 @@ requirements.dev.txt: requirements.txt
 	${VIRTUAL_ENV}/bin/pip-compile -o $@ -v $<
 
 
+# Help
+# ----
+
+help:  ## show this help
+	@echo ""
+	@echo "    :: ${RED}Self-documenting Makefile${RESET} ::"
+	@echo "${GRAY}"
+	@echo "Document targets by adding '## comment' after the target"
+	@echo ""
+	@echo "Example:"
+	@echo "  | job1:  ## help for job 1"
+	@echo "  | 	@echo \"run stuff for target1\""
+	@echo "${RESET}"
+	@echo "-----------------------------------------------------------------"
+	@grep -E '^[a-zA-Z_0-9%-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "${TARGET_COLOR}%-30s${RESET} %s\n", $$1, $$2}'
+
+
+ifneq (,$(findstring xterm,${TERM}))
+RED    := $(shell tput setaf 1)
+BLUE   := $(shell tput setaf 6)
+GRAY   := $(shell tput dim)
+RESET  := $(shell tput sgr0)
+else
+RED    := ""
+BLUE   := ""
+GRAY   := ""
+RESET  := ""
+endif
+TARGET_COLOR=${BLUE}
