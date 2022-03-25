@@ -43,8 +43,11 @@ class TestUntarOperator(TestCase):
             operator.execute({})
 
             listdir = os.listdir(dest_path)
+
             self.assertFalse(dest_path_existed)
             self.assertTrue(os.path.exists(dest_path))
+            self.assertEqual(len(listdir), 3)
+            self.assertIn('etablissements', listdir)
 
     def test_invalid_relative_path(self):
         with tempfile.TemporaryDirectory() as dest_path:

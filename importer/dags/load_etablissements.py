@@ -8,6 +8,7 @@ from airflow.sensors.filesystem import FileSensor
 from airflow import DAG
 
 from operators.find_last_file import FindLastFileOperator
+from operators.tarfile import UntarOperator
 
 default_args = {
     "depends_on_past": False,
@@ -17,6 +18,7 @@ default_args = {
 
 data_path = Variable.get('data_path')
 filepath = os.path.join(data_path, Variable.get('etab_file_glob'))
+working_tmp_dir = os.path.join(data_path, 'tmp', "{{ts_nodash}}")
 
 with DAG("load-etablissements-2022-03",
          default_args=default_args,
@@ -31,10 +33,15 @@ with DAG("load-etablissements-2022-03",
         filepath=filepath,
     )
     find_last_file = FindLastFileOperator(task_id='find_last_tar', filepath=filepath)
+    untar_last_file = UntarOperator(
+        task_id='untar_last_tar',
+        source_path="{{ task_instance.xcom_pull(task_ids='find_last_tar', key='return_value') }}",
+        dest_path=working_tmp_dir)
     end_task = DummyOperator(task_id="end")
 
 
 start_task \
     >> sensor_task \
     >> find_last_file \
+    >> untar_last_file \
     >> end_task
