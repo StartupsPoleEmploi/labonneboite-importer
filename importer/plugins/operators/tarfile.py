@@ -1,13 +1,12 @@
-import sys
 import os
 from tarfile import TarFile
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
+
+from airflow.exceptions import AirflowFailException
+from airflow.hooks.filesystem import FSHook
+from airflow.models.baseoperator import BaseOperator
 
 from common.types import Context
-
-from airflow.hooks.filesystem import FSHook
-from airflow.models import BaseOperator
-from airflow.exceptions import AirflowFailException
 
 
 class BaseTarOperator(BaseOperator):
@@ -17,17 +16,18 @@ class BaseTarOperator(BaseOperator):
     def __init__(self,
                  source_path: str,
                  dest_path: str,
-                 source_fs_conn_id='fs_default',
-                 dest_fs_conn_id='fs_default',
+                 source_fs_conn_id: str = 'fs_default',
+                 dest_fs_conn_id: str = 'fs_default',
                  errorlevel: Optional[int] = None,
                  _fshooks: Optional[Dict[str, FSHook]] = None,
-                 **kwargs):
+                 **kwargs: Any):
         """
         :params source_path: path of the source directory or tar
         :params dest_path: path of the destination tar or directory
         :params source_fs_conn_id: the file system connection id to use for the source path
         :params dest_fs_conn_id: the file system connection id to use for the destination path
-        :params errorlevel: TarFile errorlevel (see: [tarfile documentation](https://docs.python.org/3.8/library/tarfile.html#tarfile.TarFile))
+        :params errorlevel: TarFile errorlevel (see:
+            [tarfile documentation](https://docs.python.org/3.8/library/tarfile.html#tarfile.TarFile))
         """
         self.source_path = source_path
         self.dest_path = dest_path
@@ -40,8 +40,8 @@ class BaseTarOperator(BaseOperator):
 
     def _get_fshook(self, fs_conn_id: str) -> FSHook:
         """Singleton: get th FSHook from the fs_conn_id."""
-        if fs_conn_id not in self._fshooks:
-            self._fshooks[fs_conn_id] = FSHook(fs_conn_id)  # pragma: no cover
+        if fs_conn_id not in self._fshooks:  # pragma: no cover
+            self._fshooks[fs_conn_id] = FSHook(fs_conn_id)  # type: ignore [no-untyped-call]
         return self._fshooks[fs_conn_id]
 
     def _get_fs_base_path(self, fs_conn_id: str) -> str:
@@ -78,7 +78,7 @@ class UntarOperator(BaseTarOperator):
         else:
             return directory + os.sep
 
-    def is_the_archive_as_relative_path_outside_of_directory(self, archive: TarFile, directory: str):
+    def is_the_archive_as_relative_path_outside_of_directory(self, archive: TarFile, directory: str) -> bool:
         directorywithsep = os.path.realpath(self.directory_with_ending_sep(directory))
         for elementpath in archive.getnames():
             fullpath = os.path.join(directorywithsep, elementpath)
@@ -88,7 +88,7 @@ class UntarOperator(BaseTarOperator):
                 return True
         return False
 
-    def execute(self, context: Context):
+    def execute(self, context: Context) -> None:
         self.log.info('Source archive :', self.source_path)
         self.log.info('Dest directory :', self.dest_path)
         source_path = self.get_source_fullpath()

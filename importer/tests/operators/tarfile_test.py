@@ -3,6 +3,7 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
+from common.types import Context
 from operators.tarfile import UntarOperator
 
 from airflow.exceptions import AirflowFailException
@@ -20,7 +21,7 @@ class TestUntarOperator(TestCase):
                                      source_path=source_path,
                                      dest_path=dest_path,
                                      _fshooks={'fs_default': MockFSHook})
-            operator.execute({})
+            operator.execute(Context())
 
             listdir = os.listdir(dest_path)
             self.assertTrue(listdir)
@@ -40,7 +41,7 @@ class TestUntarOperator(TestCase):
                                      _fshooks={'fs_default': MockFSHook})
 
             dest_path_existed = os.path.exists(dest_path)
-            operator.execute({})
+            operator.execute(Context())
 
             listdir = os.listdir(dest_path)
 
@@ -58,7 +59,7 @@ class TestUntarOperator(TestCase):
                                      dest_path=dest_path,
                                      _fshooks={'fs_default': MockFSHook})
             with self.assertRaises(AirflowFailException):
-                operator.execute({})
+                operator.execute(Context())
 
             listdir = os.listdir(dest_path)
             self.assertFalse(listdir)
@@ -72,4 +73,4 @@ class TestUntarOperator(TestCase):
                                      dest_path=dest_path + os.sep,
                                      _fshooks={'fs_default': MockFSHook})
             with self.assertRaises(AirflowFailException):
-                operator.execute({})
+                operator.execute(Context())

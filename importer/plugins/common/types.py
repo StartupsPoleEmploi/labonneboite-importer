@@ -1,15 +1,18 @@
 from typing import Any, Dict, List, Optional, TypedDict, TYPE_CHECKING
 
-from pendulum import DateTime
-
+from airflow import DAG
 from airflow.configuration import AirflowConfigParser
-from airflow.models import BaseOperator, DAG, DagRun, TaskInstance
+from airflow.models.baseoperator import BaseOperator
+from airflow.models.connection import Connection
+from airflow.models.dagrun import DagRun
+from airflow.models.taskinstance import TaskInstance
+from pendulum.datetime import DateTime
 
 if TYPE_CHECKING:
     import types
 
     class ContextVar(TypedDict):
-        json: Optional[Dict]
+        json: Optional[Dict[str, Any]]
         value: Optional[Any]
 
     class Context(TypedDict):
@@ -54,7 +57,7 @@ if TYPE_CHECKING:
 
         the execution date (logical date), same as `dag_run.logical_date`
         """
-        inlets: List
+        inlets: List[Any]
         logical_date: DateTime
         """
         the execution date (logical date), same as `dag_run.logical_date`
@@ -89,8 +92,8 @@ if TYPE_CHECKING:
             `{{ execution_date }}` is `2018-01-01 00:00:00` and `schedule_interval`
             is `@weekly`, `{{ next_execution_date }}` will be `2018-01-08 00:00:00`
         """
-        outlets: List
-        params: Dict
+        outlets: List[Any]
+        params: Dict[str, str]
         """
         A reference to the user-defined params dictionary which can
             be overridden by the dictionary passed through trigger_dag -c if you
@@ -228,7 +231,7 @@ if TYPE_CHECKING:
             deserialized JSON object, append the path to the key within the JSON
             object.
         """
-        conn: Optional[Dict]
+        conn: Optional[Dict[str, Connection]]
         """
         Connection represented as a dictionary.
         """
@@ -253,5 +256,8 @@ if TYPE_CHECKING:
             '20220313'
         """
 else:
-    from airflow.utils.context import Context  # noqa: F401
+    from airflow.utils.context import Context
+
     ContextVar = dict
+
+__all__ = ('ContextVar', 'Context')

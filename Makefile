@@ -71,6 +71,17 @@ test-init-variables:
 	${AIRFLOW_TEST_ENV} airflow variables import ./importer/settings/default.json
 	${AIRFLOW_TEST_ENV} airflow variables import ./importer/settings/local.json
 
+# Lint
+# ----
+
+lint: lint-flake8 lint-mypy  ## Lint and type check the project
+
+lint-flake8:
+	flake8 importer
+
+lint-mypy:
+	cd importer/plugins; mypy --config-file=../../setup.cfg . ../dags ../tests
+
 # Python virtual env
 # ------------------
 PYENV_ARG = --skip-existing

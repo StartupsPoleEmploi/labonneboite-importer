@@ -1,14 +1,15 @@
 import glob
 import os
 from operator import itemgetter
-from typing import Iterable, Iterator, Tuple, Optional
+from typing import Iterable, Iterator, Tuple, Optional, Any, Generator
+
+from airflow.exceptions import AirflowSkipException
+from airflow.hooks.filesystem import FSHook
+from airflow.models.baseoperator import BaseOperator
+from pendulum.datetime import DateTime
+from pendulum.tz.timezone import UTC
 
 from common.types import Context
-from pendulum import DateTime, UTC
-
-from airflow.hooks.filesystem import FSHook
-from airflow.models import BaseOperator
-from airflow.exceptions import AirflowSkipException
 
 TimeIntervale = Tuple[DateTime, DateTime]
 
@@ -21,15 +22,16 @@ class FindLastFileOperator(BaseOperator):
     """
     template_fields = ["filepath"]
 
-    def __init__(self, *, filepath, fs_conn_id='fs_default', _fshook: Optional[FSHook] = None, **kwargs):
+    def __init__(self, *args: Any, filepath: str, fs_conn_id: str = 'fs_default', _fshook: Optional[FSHook] = None,
+                 **kwargs: Any):
         self.filepath = filepath
         self.fs_conn_id = fs_conn_id
         self._fshook = _fshook
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
 
     def _get_fshook(self) -> FSHook:
-        if self._fshook is None:
-            self._fshook = FSHook(self.fs_conn_id)
+        if self._fshook is None:  # pragma: no cover
+            self._fshook = FSHook(self.fs_conn_id)  # type: ignore [no-untyped-call]
         return self._fshook
 
     def get_files_to_execute_in_time_intervale(self, time_intervale: TimeIntervale) -> Iterator[Tuple[str, DateTime]]:
@@ -38,7 +40,9 @@ class FindLastFileOperator(BaseOperator):
         paths = glob.glob(full_path)
         for path in paths:
             file_modification_ts = os.path.getmtime(path)
-            file_modification_dt = DateTime.fromtimestamp(file_modification_ts, tz=UTC)
+            file_modification_dt = DateTime.fromtimestamp(  # type: ignore [no-untyped-call]
+                file_modification_ts, tz=UTC
+            )
             if time_intervale[0] <= file_modification_dt < time_intervale[1]:
                 print(f"Found {path} modifed on {file_modification_dt}")
                 yield path, file_modification_dt
@@ -48,7 +52,7 @@ class FindLastFileOperator(BaseOperator):
         end = context['data_interval_end']
         return start, end
 
-    def get_files_to_execute(self, context: Context):
+    def get_files_to_execute(self, context: Context) -> Generator[Tuple[str, DateTime], None, None]:
         time_intervale = self.get_time_interval(context)
         self.log.info("Time interval: from %s to %s", *time_intervale)
         yield from self.get_files_to_execute_in_time_intervale(time_intervale)
@@ -63,7 +67,7 @@ class FindLastFileOperator(BaseOperator):
             raise AirflowSkipException('No file found in the interval')
         return next(iter(sorted_files))
 
-    def execute(self, context: Context):
+    def execute(self, context: Context) -> str:
         files: Iterator[Tuple[str, DateTime]] = self.get_files_to_execute(context)
         file, _ = self.find_latest_file(files)
         return file
