@@ -87,7 +87,7 @@ services:
     expose:
       - 5432
     volumes:
-      - /var/lib/postgresql/data/
+      - ./postgres/var/lib/postgresql/data/:/var/lib/postgresql/data/
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 5s
@@ -103,7 +103,7 @@ services:
       MARIADB_PASSWORD: ${MARIADB_PASSWORD:-importer}
       MARIADB_USER: ${MARIADB_USER:-importer}
     volumes:
-      - /var/lib/mysql
+      - ./mysql/var/lib/mysql:/var/lib/mysql
     healthcheck:
       test: [CMD, healthcheck.sh, '--connect']
       interval: 1m30s
@@ -111,6 +111,25 @@ services:
       retries: 5
       start_period: 5s
     restart: unless-stopped
+
+  importer_mysql:
+    image: mariadb:10.5.9-focal
+    volumes:
+      - ./importer_mysql/var/lib/mysql/data:/var/lib/mysql/data
+    expose:
+    - 3306
+    environment:
+      MYSQL_DATABASE: ${IMPORTER_MYSQL_SCHEMA:-importer}
+      MYSQL_ROOT_PASSWORD: ${IMPORTER_MYSQL_ROOT_PASSWORD:-importer}
+      MYSQL_PASSWORD: ${IMPORTER_MYSQL_PASSWORD:-importer}
+      MYSQL_USER: ${IMPORTER_MYSQL_LOGIN:-importer}
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect]
+      interval: 1m30s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
 
   redis:
     image: redis:latest

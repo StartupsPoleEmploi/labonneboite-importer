@@ -1,1 +1,3 @@
 apache-airflow==2.2.4 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.2.4/constraints-3.8.txt"
+apache-airflow-providers-mysql --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.2.4/constraints-3.8.txt"
+-e git+https://github.com/StartupsPoleEmploi/labonneboite-common.git@644e96fe19128d1ad67e89397695d4e917fde1af#egg=labonneboite-common
