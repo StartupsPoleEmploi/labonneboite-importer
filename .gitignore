@@ -1,7 +1,12 @@
 .env
 nginx/etc/nginx/auth/.htpasswd
 nginx/var/log
-airflow/
+airflow/airflow.db
+airflow/airflow-webserver.pid
+airflow/logs
+airflow/opt
+airflow/webserver_config.py
+
 postgres/
 __pycache__
 *.pyc
@@ -9,3 +14,6 @@ __pycache__
 venv/
 .installed-python-version
 .coverage
+import-mysql/
+importer/var
+importer/logs/

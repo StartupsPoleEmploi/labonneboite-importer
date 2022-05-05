@@ -58,7 +58,18 @@ set -ex
 mkdir -p /sources/airflow/opt/airflow/logs
 chown -R "${AIRFLOW_UID}:0" /sources/airflow/opt/airflow/logs
 /entrypoint airflow version
+
 /entrypoint airflow variables import /sources/importer/settings/default.json;
 /entrypoint airflow variables import /sources/importer/settings/docker.json;
-/entrypoint airflow connections list --conn-id fs_default | grep fs_default \
-    || /entrypoint airflow connections add fs_default --conn-type fs
+
+/entrypoint airflow connections list --conn-id fs_default > /dev/null \
+  || /entrypoint airflow connections add fs_default --conn-type fs
+
+/entrypoint airflow connections list --conn-id mysql_importer > /dev/null \
+  || /entrypoint airflow connections add mysql_importer \
+    --conn-host ${IMPORTER_MYSQL_HOST:-importer_mysql} \
+    --conn-login ${IMPORTER_MYSQL_LOGIN:-importer} \
+    --conn-password ${IMPORTER_MYSQL_PASSWORD:-importer} \
+    --conn-port ${IMPORTER_MYSQL_PORT:-3306} \
+    --conn-schema ${IMPORTER_MYSQL_SCHEMA:-importer} \
+    --conn-type mysql
