@@ -1,19 +1,24 @@
 .env
-nginx/etc/nginx/auth/.htpasswd
-nginx/var/log
+
+# local test importer
 airflow/airflow.db
 airflow/airflow-webserver.pid
 airflow/logs
 airflow/opt
 airflow/webserver_config.py
 
-postgres/
+# docker volumes
+postgres/var/lib/postgresql/data/*
+importer-mysql/var/lib/mysql/data/*
+nginx/var/log/*
+
+# security
+nginx/etc/nginx/auth/.htpasswd
+
+# dev
 __pycache__
 *.pyc
-
 venv/
 .installed-python-version
 .coverage
-import-mysql/
-importer/var
-importer/logs/
+importer/var/*

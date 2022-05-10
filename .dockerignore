@@ -1,0 +1,9 @@
+*_test.py
+venv/
+
+postgres/var/lib/postgresql/
+importer-mysql/var/lib/mysql/data/
+nginx/var/log/
+
+import/var/input
+import/var/output

@@ -26,6 +26,7 @@ This projet use an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load)
   - mysqlclient (`libmysqlclient-dev`)
   - ffi (`libffi-dev`)
 - gcc-11 (pour installer compiler python avec la `libffi`)
+- pg_config (`libpq-dev` / ubuntu)
 
 ## Developement
 
@@ -33,6 +34,12 @@ init local env :
 
 ```
 make init
+```
+
+If the init fail you may have to rebuild all without condition:
+
+```
+make init --always-make
 ```
 
 start local env :

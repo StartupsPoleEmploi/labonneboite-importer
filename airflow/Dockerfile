@@ -1,24 +1,31 @@
 FROM apache/airflow:2.2.4-python3.9
 
-USER root 
+USER root
 
-ARG AIRFLOW_HOME=/opt/airflow 
+ARG AIRFLOW_HOME=/opt/airflow
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get -y install git
+    apt-get -y install \
+        git \
+        libpq-dev \
+        gcc
 
 #ADD dags-airflow /opt/airflow/dags
 
-ADD airflow.cfg /opt/airflow/airflow.cfg
+COPY airflow/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 
-RUN pip install --upgrade pip
-
-RUN chown -R "airflow:root" /opt/airflow/
+RUN chown -R "airflow:root" \
+    /opt/airflow/
 
 # USER ${AIRFLOW_UID}
 USER airflow
 
-ADD requirements.txt /requirements.txt
+RUN ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip install --upgrade pip && \
+    ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip install pip-tools
 
-RUN pip install -r /requirements.txt
+COPY requirements.txt /requirements.txt
+
+RUN ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip-sync /requirements.txt
+
+

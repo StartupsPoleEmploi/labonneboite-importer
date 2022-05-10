@@ -1,1 +1,4 @@
-{}
+{
+  "data_path": "/var/input",
+  "work_path": "/var/output"
+}

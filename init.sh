@@ -1,7 +1,18 @@
+set -ex
+
 function ver() {
     printf "%04d%04d%04d%04d" ${1//./ }
 }
-airflow_version=$(gosu airflow airflow version)
+
+function run() {
+    set -e
+    sudo -u "#${AIRFLOW_UID}" \
+      AIRFLOW_HOME=${AIRFLOW_HOME} \
+      $(which ${1:-airflow}) ${@:2}
+    return $?
+}
+
+airflow_version=$(run airflow version)
 airflow_version_comparable=$(ver ${airflow_version})
 min_airflow_version=2.2.0
 min_airflow_version_comparable=$(ver ${min_airflow_version})
@@ -54,20 +65,25 @@ if [[ ${warning_resources} == "true" ]]; then
     echo "   https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html#before-you-begin"
     echo
 fi
-set -ex
 mkdir -p /sources/airflow/opt/airflow/logs
-chown -R "${AIRFLOW_UID}:0" /sources/airflow/opt/airflow/logs
-/entrypoint airflow version
+chown -R "${AIRFLOW_UID}:0" \
+  /sources/airflow/opt/airflow/logs
 
-/entrypoint airflow variables import /sources/importer/settings/default.json;
-/entrypoint airflow variables import /sources/importer/settings/docker.json;
+mkdir -p /var/output
+chown -R "${AIRFLOW_UID}:0" /var/output
 
-/entrypoint airflow connections list --conn-id fs_default > /dev/null \
-  || /entrypoint airflow connections add fs_default --conn-type fs
+# run entry point once
+CONNECTION_CHECK_MAX_COUNT=1 bash -x /entrypoint airflow version
 
-/entrypoint airflow connections list --conn-id mysql_importer > /dev/null \
-  || /entrypoint airflow connections add mysql_importer \
-    --conn-host ${IMPORTER_MYSQL_HOST:-importer_mysql} \
+run airflow variables import /sources/importer/settings/default.json;
+run airflow variables import /sources/importer/settings/docker.json;
+
+run airflow connections list --conn-id fs_default | grep fs_default > /dev/null \
+  || run airflow connections add fs_default --conn-type fs
+
+run airflow connections list --conn-id mysql_importer | grep mysql_importer > /dev/null \
+  || run airflow connections add mysql_importer \
+    --conn-host ${IMPORTER_MYSQL_HOST:-importer-mysql} \
     --conn-login ${IMPORTER_MYSQL_LOGIN:-importer} \
     --conn-password ${IMPORTER_MYSQL_PASSWORD:-importer} \
     --conn-port ${IMPORTER_MYSQL_PORT:-3306} \
