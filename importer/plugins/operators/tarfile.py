@@ -1,6 +1,7 @@
 import os
+from pathlib import Path
 from tarfile import TarFile
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, Union
 
 from airflow.exceptions import AirflowFailException
 from airflow.hooks.filesystem import FSHook
@@ -14,8 +15,8 @@ class BaseTarOperator(BaseOperator):
     template_fields = ["source_path", "dest_path"]
 
     def __init__(self,
-                 source_path: str,
-                 dest_path: str,
+                 source_path: Union[str, Path],
+                 dest_path: Union[str, Path],
                  source_fs_conn_id: str = 'fs_default',
                  dest_fs_conn_id: str = 'fs_default',
                  errorlevel: Optional[int] = None,
@@ -44,23 +45,23 @@ class BaseTarOperator(BaseOperator):
             self._fshooks[fs_conn_id] = FSHook(fs_conn_id)  # type: ignore [no-untyped-call]
         return self._fshooks[fs_conn_id]
 
-    def _get_fs_base_path(self, fs_conn_id: str) -> str:
+    def _get_fs_base_path(self, fs_conn_id: str) -> Path:
         """Get the bash path of the fs_conn_id."""
         fshook = self._get_fshook(self.source_fs_conn_id)
-        return fshook.get_path()
+        return Path(fshook.get_path())
 
-    def _get_fullpath(self, fs_conn_id: str, subpath: str) -> str:
+    def _get_fullpath(self, fs_conn_id: str, subpath: str) -> Path:
         """Get the full path for a file system connexion and it subpath."""
         base_path = self._get_fs_base_path(fs_conn_id)
-        fullpath = os.path.join(base_path, subpath)
+        fullpath = base_path / subpath
         return fullpath
 
-    def get_source_fullpath(self) -> str:
+    def get_source_fullpath(self) -> Path:
         """Get the full path (with connection) of the source path."""
         fullpath = self._get_fullpath(self.source_fs_conn_id, self.source_path)
         return fullpath
 
-    def get_dest_fullpath(self) -> str:
+    def get_dest_fullpath(self) -> Path:
         """Get the full path (with connection) of the destination path."""
         fullpath = self._get_fullpath(self.dest_fs_conn_id, self.dest_path)
         return fullpath
@@ -72,18 +73,18 @@ class UntarOperator(BaseTarOperator):
     """
 
     @staticmethod
-    def directory_with_ending_sep(directory: str) -> str:
+    def directory_with_ending_sep(directory: Path) -> Path:
         if directory[-1] == os.sep:
             return directory
         else:
             return directory + os.sep
 
-    def is_the_archive_as_relative_path_outside_of_directory(self, archive: TarFile, directory: str) -> bool:
-        directorywithsep = os.path.realpath(self.directory_with_ending_sep(directory))
+    def is_the_archive_as_relative_path_outside_of_directory(self, archive: TarFile, directory: Path) -> bool:
+        absolute_directory = directory.absolute()
         for elementpath in archive.getnames():
-            fullpath = os.path.join(directorywithsep, elementpath)
-            realpath = os.path.realpath(fullpath)
-            if not realpath.startswith(directorywithsep):
+            fullpath = absolute_directory / elementpath
+            realpath = fullpath.absolute()
+            if not realpath.is_relative_to(absolute_directory):
                 self.log.error('Invalid path in the archive :', elementpath)
                 return True
         return False
@@ -97,4 +98,5 @@ class UntarOperator(BaseTarOperator):
         tarfile.list()
         if self.is_the_archive_as_relative_path_outside_of_directory(tarfile, dest_path):
             raise AirflowFailException('No relative path is allow in the archive')
+        dest_path.mkdir(parents=True, exist_ok=True)
         tarfile.extractall(dest_path)
