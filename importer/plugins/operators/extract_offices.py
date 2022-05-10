@@ -1,7 +1,8 @@
 import csv
 import itertools
 import os
-from typing import Optional, List, Generator, NamedTuple, Dict, Tuple, TYPE_CHECKING, Iterable, Iterator, Any
+from pathlib import Path
+from typing import Optional, List, Generator, NamedTuple, Dict, Tuple, TYPE_CHECKING, Iterable, Iterator, Any, Union
 from typing import Set
 
 from airflow.hooks.filesystem import FSHook
@@ -81,11 +82,11 @@ class Office(NamedTuple):
 
 
 class ExtractOfficesOperator(BaseOperator):
-    template_fields = ["offices_filename"]
+    template_fields = ["_input_filename"]
 
     def __init__(self,
                  *args: Any,
-                 offices_filename: str,
+                 offices_filename: Union[str, Path],
                  destination_table: str,
                  fs_conn_id: str = 'fs_default',
                  db_conn_id: str = 'mysql_importer',
@@ -110,8 +111,8 @@ class ExtractOfficesOperator(BaseOperator):
 
     def _get_fullpath(self) -> str:
         fshook = self._get_fs_hook()
-        base_path = fshook.get_path()
-        fullpath = os.path.join(base_path, self._input_filename)
+        base_path = Path(fshook.get_path())
+        fullpath = base_path / self._input_filename
         return fullpath
 
     def _get_mysql_hook(self) -> MySqlHook:
@@ -152,7 +153,7 @@ class ExtractOfficesOperator(BaseOperator):
         return len(sirets_inserted)
 
     def _get_sirets_from_database(self) -> List[str]:
-        query = f'SELECT "siret" FROM "{self._table_name}"'
+        query = f'SELECT siret FROM {self._table_name}'
         rows: List[Tuple[str]] = self._get_mysql_hook().get_records(query)
         return [row[0] for row in rows if is_siret(row[0])]
 
