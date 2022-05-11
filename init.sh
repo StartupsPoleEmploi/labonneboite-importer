@@ -89,3 +89,7 @@ run airflow connections list --conn-id mysql_importer | grep mysql_importer > /d
     --conn-port ${IMPORTER_MYSQL_PORT:-3306} \
     --conn-schema ${IMPORTER_MYSQL_SCHEMA:-importer} \
     --conn-type mysql
+
+pushd /sources
+  run alembic -c importer/settings/alembic.ini upgrade head
+popd

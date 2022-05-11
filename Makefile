@@ -55,6 +55,13 @@ startserver:  ## Start local servers
 	docker-compose up --build --detach
 	docker-compose restart
 
+MIGRATION_MESSAGE	?=
+UID	:= $(shell id -u)
+migration:
+	docker-compose run --rm -u "${UID}" -e HOME=/home/airflow/ alembic-cli revision --autogenerate -m "${MIGRATION_MESSAGE}"
+
+migrate:
+	docker-compose run --rm airflow-init
 
 # Testing
 # -------

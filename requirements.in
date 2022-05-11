@@ -3,4 +3,4 @@ apache-airflow-providers-mysql --constraint "https://raw.githubusercontent.com/a
 psycopg2
 redis
 celery<=5.1.2  # click deps
--e git+https://github.com/StartupsPoleEmploi/labonneboite-common.git@644e96fe19128d1ad67e89397695d4e917fde1af#egg=labonneboite-common
+-e git+https://github.com/StartupsPoleEmploi/labonneboite-common.git@43bbf10c9fedc3ba2461c87773a493a617de9b29#egg=labonneboite-common

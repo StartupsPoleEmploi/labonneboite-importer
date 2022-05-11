@@ -235,6 +235,18 @@ services:
       - -c
       - airflow
 
+  alembic-cli:
+    <<: *airflow-common
+    profiles:
+      - debug
+    working_dir: /sources
+    volumes:
+      - .:/sources
+    entrypoint:
+      - alembic
+      - -c
+      - importer/settings/alembic.ini
+
   flower:
     <<: *airflow-common
     command: celery flower
