@@ -48,24 +48,28 @@ def add_quote(string: str, quote: str = '"') -> str:
     return quote + string + quote
 
 
+def nullable(string: str) -> Optional[str]:
+    return None if string == "NULL" else string
+
+
 class Office(NamedTuple):
     siret: str
-    raisonsociale: str
-    enseigne: str
-    codenaf: str
-    numerorue: str
-    libellerue: str
-    codecommune: str
-    codepostal: str
-    email: str
-    tel: str
-    trancheeffectif: str
-    website: str
-    flag_poe_afpr: str
-    flag_pmsmp: str
-    flag_junior: str
-    flag_senior: str
-    flag_handicap: str
+    raisonsociale: Optional[str]
+    enseigne: Optional[str]
+    codenaf: Optional[str]
+    numerorue: Optional[str]
+    libellerue: Optional[str]
+    codecommune: Optional[str]
+    codepostal: Optional[str]
+    email: Optional[str]
+    tel: Optional[str]
+    trancheeffectif: Optional[str]
+    website: Optional[str]
+    flag_poe_afpr: Optional[str]
+    flag_pmsmp: Optional[str]
+    flag_junior: Optional[str]
+    flag_senior: Optional[str]
+    flag_handicap: Optional[str]
 
     @property
     def departement(self) -> Optional[str]:
@@ -203,7 +207,9 @@ class ExtractOfficesOperator(BaseOperator):
 
     def _read_offices(self) -> Generator[Office, None, None]:
         for office in self._read_file():
-            yield Office(**office)
+            siret = office.pop('siret')
+            nullable_fields = {key: nullable(value) for key, value in office.items()}
+            yield Office(siret, **nullable_fields)
 
     def _get_offices_from_file(self) -> Generator[Dict[str, Office], None, None]:
         self.log.info("extracting %s...", self._get_fullpath())

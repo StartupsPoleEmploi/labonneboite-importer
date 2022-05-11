@@ -33,6 +33,17 @@ class TestExtractOfficesOperator(TestCase):
     office_filename = join(TEST_DIR, 'data', 'lbb-output-wf-202202150303-extracted',
                            'etablissements', 'etablissements.csv')
 
+    def execute(self, _mysql_hook: Optional[MySqlHook] = None):
+        mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
+        mock_mysql_hook = _mysql_hook or MagicMock(MySqlHook)
+        operator = ExtractOfficesOperator(offices_filename=self.office_filename,
+                                          destination_table='test_table',
+                                          task_id="test_task",
+                                          chunk_size=5,
+                                          _fs_hook=mock_fs_hook,
+                                          _mysql_hook=mock_mysql_hook)
+        operator.execute({})
+
     def test_coherence_between_FIELDS_and_Office_props(self):
         missing_fields = set(FIELDS) - set(vars(Office))
         if missing_fields:
@@ -65,17 +76,6 @@ class TestExtractOfficesOperator(TestCase):
         self.assertEqual(5, len(result[0]))
         self.assertEqual(4, len(result[1]))
 
-    def execute(self, _mysql_hook: Optional[MySqlHook] = None):
-        mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
-        mock_mysql_hook = _mysql_hook or MagicMock(MySqlHook)
-        operator = ExtractOfficesOperator(offices_filename=self.office_filename,
-                                          destination_table='test_table',
-                                          task_id="test_task",
-                                          chunk_size=5,
-                                          _fs_hook=mock_fs_hook,
-                                          _mysql_hook=mock_mysql_hook)
-        operator.execute({})
-
     def test_execute_create_companies(self):
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.insert_rows = Mock()
@@ -87,6 +87,19 @@ class TestExtractOfficesOperator(TestCase):
             'test_table',
             [["00000488794926"], ["00000533026381"], ["00000599101508"], ["00000815184353"]],
             ['siret'],
+            replace=True,
+        )
+
+    def test_NULL_values_are_saved_with_null(self):
+        mock_mysql_hook = MagicMock(MySqlHook)
+        mock_mysql_hook.insert_rows = Mock()
+        with patch('operators.extract_offices.FIELDS', ['trancheeffectif']):
+            self.execute(_mysql_hook=mock_mysql_hook)
+
+        mock_mysql_hook.insert_rows.assert_called_with(
+            'test_table',
+            [[None], [None], [None], [None]],
+            ['trancheeffectif'],
             replace=True,
         )
 
