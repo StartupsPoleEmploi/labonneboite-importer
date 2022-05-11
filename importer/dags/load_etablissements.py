@@ -54,7 +54,7 @@ with DAG("load-etablissements-2022-03",
     extract_offices = ExtractOfficesOperator(
         task_id='extract_offices',
         destination_table='etablissements_raw',
-        offices_filename=offices_path,
+        offices_filename=str(offices_path),
     )
 
     rmdir = BashOperator(

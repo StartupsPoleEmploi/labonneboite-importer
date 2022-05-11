@@ -1,6 +1,5 @@
 import csv
 import itertools
-import os
 from pathlib import Path
 from typing import Optional, List, Generator, NamedTuple, Dict, Tuple, TYPE_CHECKING, Iterable, Iterator, Any, Union
 from typing import Set
@@ -86,11 +85,11 @@ class Office(NamedTuple):
 
 
 class ExtractOfficesOperator(BaseOperator):
-    template_fields = ["_input_filename"]
+    template_fields = ["offices_filename"]
 
     def __init__(self,
                  *args: Any,
-                 offices_filename: Union[str, Path],
+                 offices_filename: str,
                  destination_table: str,
                  fs_conn_id: str = 'fs_default',
                  db_conn_id: str = 'mysql_importer',
@@ -99,29 +98,29 @@ class ExtractOfficesOperator(BaseOperator):
                  _mysql_hook: Optional[MySqlHook] = None,
                  **kwargs: Any
                  ):
-        self._input_filename = offices_filename
-        self._chunk_size = chunk_size
-        self._fs_conn_id = fs_conn_id
+        self.offices_filename = offices_filename
+        self.destination_table = destination_table
+        self.fs_conn_id = fs_conn_id
+        self.db_conn_id = db_conn_id
+        self.chunk_size = chunk_size
         self._fs_hook = _fs_hook
-        self._db_conn_id = db_conn_id
         self._mysql_hook = _mysql_hook
-        self._table_name = destination_table
         super().__init__(*args, **kwargs)
 
     def _get_fs_hook(self) -> FSHook:
         if not self._fs_hook:  # pragma: no cover
-            self._fs_hook = FSHook(self._fs_conn_id)  # type: ignore [no-untyped-call]
+            self._fs_hook = FSHook(self.fs_conn_id)  # type: ignore [no-untyped-call]
         return self._fs_hook
 
     def _get_fullpath(self) -> str:
         fshook = self._get_fs_hook()
         base_path = Path(fshook.get_path())
-        fullpath = base_path / self._input_filename
+        fullpath = base_path / self.offices_filename
         return fullpath
 
     def _get_mysql_hook(self) -> MySqlHook:
         if not self._mysql_hook:
-            self._mysql_hook = MySqlHook(self._db_conn_id)
+            self._mysql_hook = MySqlHook(self.db_conn_id)
         return self._mysql_hook
 
     def _log_debug(self, existing_set: Set[str], creatable_sirets: Set[str]) -> None:
@@ -157,7 +156,7 @@ class ExtractOfficesOperator(BaseOperator):
         return len(sirets_inserted)
 
     def _get_sirets_from_database(self) -> List[str]:
-        query = f'SELECT siret FROM {self._table_name}'
+        query = f'SELECT siret FROM {self.destination_table}'
         rows: List[Tuple[str]] = self._get_mysql_hook().get_records(query)
         return [row[0] for row in rows if is_siret(row[0])]
 
@@ -165,7 +164,7 @@ class ExtractOfficesOperator(BaseOperator):
         """
         create new offices (that are not yet in our etablissement table)
         """
-        self._get_mysql_hook().insert_rows(self._table_name, [
+        self._get_mysql_hook().insert_rows(self.destination_table, [
             [
                 getattr(office, key) for key in FIELDS
             ]
@@ -183,13 +182,13 @@ class ExtractOfficesOperator(BaseOperator):
     def _create_delete_sirets_request(self, sirets: Iterable[str]) -> str:
         comma_separated_sirets = map(add_quote, sirets)
         stringified_sirets = ', '.join(comma_separated_sirets)
-        return f'DELETE FROM "{self._table_name}" WHERE "siret" IN ({stringified_sirets})'
+        return f'DELETE FROM "{self.destination_table}" WHERE "siret" IN ({stringified_sirets})'
 
     def _delete_deletable_offices(self, deletable_sirets: Set[str]) -> None:
         if deletable_sirets:
             self._get_mysql_hook().run([
                 self._create_delete_sirets_request(sirets)
-                for sirets in chunks(list(deletable_sirets), self._chunk_size)
+                for sirets in chunks(list(deletable_sirets), self.chunk_size)
             ])
         self.log.info("%i no longer existing offices deleted.", len(deletable_sirets))
 
@@ -222,7 +221,7 @@ class ExtractOfficesOperator(BaseOperator):
                 continue
             count += 1
             offices[office.siret] = office
-            if count % self._chunk_size == 0:
+            if count % self.chunk_size == 0:
                 self.log.debug("processed %s lines", count)
                 yield offices
                 offices = {}
