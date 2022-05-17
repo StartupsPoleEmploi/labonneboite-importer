@@ -10,5 +10,8 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+      - uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: deploy
-        run: bash .execute.sh deploy /tmp/id_rsa "$IP" "$ENV"
+        run: bash .execute.sh deploy "" "$IP" "$ENV"
