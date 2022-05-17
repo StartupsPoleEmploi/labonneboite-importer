@@ -49,3 +49,25 @@ make startserver
 ```
 
 access : https://127.0.0.1/ (HTTP_PORT may be changed in .env)
+
+# Environment variable
+
+| Var name                      | Default                |
+|-------------------------------|------------------------|
+| _PIP_ADDITIONAL_REQUIREMENTS  |                        |
+| INPUT_DIR                     | ./importer/var/input   |
+| OUTPUT_DIR                    | ./importer/var/output  |
+| AIRFLOW_UID                   | 50000                  |
+| IMPORTER_MYSQL_SCHEMA         | importer               |
+| IMPORTER_MYSQL_ROOT_PASSWORD  | importer               |
+| IMPORTER_MYSQL_PASSWORD       | importer               |
+| IMPORTER_MYSQL_LOGIN          | importer               |
+| HTTP_PORT                     | 80                     |
+| HTTPS_PORT                    | 443                    |
+| FLOWER_HTTP_PORT              | 5555                   |
+| ENV_TYPE                      | production             |
+| SSL_FULLCHAIN                 |                        |
+| SSL_PRIVKEY                   |                        |
+| SSL_DHPARAM                   |                        |
+| _AIRFLOW_WWW_USER_USERNAME    | airflow                |
+| _AIRFLOW_WWW_USER_PASSWORD    | airflow                |
