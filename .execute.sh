@@ -12,8 +12,7 @@ connect_openvpn() {
 
   ovpn=$(mktemp --suffix=.ovpn)
   echo "$VPN_CONFIG" > ${ovpn}
-  openvpn ${ovpn}
-  rm ${ovpn}
+  sudo openvpn --dev tun0 --daemon --config ${ovpn}
 }
 
 livraison() {
@@ -26,7 +25,7 @@ livraison() {
   echo ${#VPN_CONFIG}
   echo ${#ENV}
 
-  [ "$VPN_CONFIG" != "" ] && connect_openvpn "${VPN_CONFIG}";
+  [ "$VPN_CONFIG" != "" ] && (connect_openvpn "${VPN_CONFIG}" || return $?);
 	[ "$ARG" != "" ] && RSA="-i $ARG" || RSA="";
 	read -r -d "" SCRIPT <<EOF
 	  if [[ ! -e /home/docker/importer ]]
