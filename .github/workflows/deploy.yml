@@ -8,10 +8,20 @@ jobs:
   deploy:
     runs-on: ubuntu-20.04
     steps:
+      - name: Install deps
+        run: sudo apt-get install -y openvpn
+
       - name: Check out repository code
         uses: actions/checkout@v3
-      - uses: webfactory/ssh-agent@v0.5.4
+
+      - name: Add ssh key
+        uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: deploy
-        run: bash .execute.sh deploy "" "$IP" "$ENV"
+        run: bash .execute.sh deploy "" "$IP" "$ENV" "$VPN_CONFIG"
+        env:
+          IP: ${{ secrets.IP }}
+          ENV: ${{ secrets.ENV }}
+          VPN_CONFIG: ${{ secrets.VPN_CONFIG }}

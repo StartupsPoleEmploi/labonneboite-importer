@@ -7,11 +7,23 @@ usage() {
 	echo "- $0 restore [docker archive] : lance une restauration de docker";
 }
 
+connect_openvpn() {
+  local VPN_CONFIG="$1";
+
+  ovpn=$(mktemp --suffix=.ovpn)
+  echo "$VPN_CONFIG" > ${ovpn}
+  openvpn ${ovpn}
+  rm ${ovpn}
+}
+
 livraison() {
 	local IP="$1";
 	local ARG="$2";
 	local ENV="$3";
+  local VPN_CONFIG="$4";
 
+
+  [ "$VPN_CONFIG" != "" ] && connect_openvpn "${VPN_CONFIG}";
 	[ "$ARG" != "" ] && RSA="-i $ARG" || RSA="";
 	read -r -d "" SCRIPT <<EOF
 	  if [[ ! -e /home/docker/importer ]]
@@ -39,7 +51,8 @@ case $CMD in
 	deploy)
 		IP="$3";
 		ENV="$4";
-		livraison "$IP" "$ARG" "$ENV";
+		VPN_CONFIG="$5";
+		livraison "$IP" "$ARG" "$ENV" "$VPN_CONFIG";
 		;;
 	test)
 		DOMAIN="$3";
