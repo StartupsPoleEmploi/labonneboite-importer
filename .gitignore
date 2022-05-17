@@ -22,3 +22,5 @@ venv/
 .installed-python-version
 .coverage
 importer/var/*
+.idea/
+docker-compose.override.yml
