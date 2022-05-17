@@ -1,0 +1,13 @@
+name: deployment
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: deploy
+        run: bash .execute.sh deploy /tmp/id_rsa "$IP" "$ENV"

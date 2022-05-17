@@ -14,17 +14,17 @@ livraison() {
 
 	[ "$ARG" != "" ] && RSA="-i $ARG" || RSA="";
 	read -r -d "" SCRIPT <<EOF
-	  if [  ]
+	  if [[ ! -e /home/docker/importer ]]
 	  then
-
+      git clone git@github.com:StartupsPoleEmploi/lbb-importer.git /home/docker/importer
 	  fi
-		cd /home/docker/jepostule;
+		cd /home/docker/importer;
 		git reset --hard HEAD;
 		git checkout $CI_COMMIT_BRANCH &&
 		git pull &&
 		[ "$ENV" != "" ] && echo "$ENV" >.env; \
 		docker-compose up -d --build 1>/dev/null && \
-		docker-compose restart jepostule;
+		docker-compose restart;
 EOF
 	[ "$ENV" != "" ] && SCRIPT=`echo "export ENV='$ENV'; $SCRIPT"`;
 	ssh -Ctt livraison@$IP $RSA -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$SCRIPT";
