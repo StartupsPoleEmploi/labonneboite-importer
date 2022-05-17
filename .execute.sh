@@ -22,6 +22,9 @@ livraison() {
 	local ENV="$3";
   local VPN_CONFIG="$4";
 
+  echo ${IP:0:3}
+  echo ${#VPN_CONFIG}
+  echo ${#ENV}
 
   [ "$VPN_CONFIG" != "" ] && connect_openvpn "${VPN_CONFIG}";
 	[ "$ARG" != "" ] && RSA="-i $ARG" || RSA="";
