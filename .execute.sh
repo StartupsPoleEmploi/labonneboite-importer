@@ -7,12 +7,24 @@ usage() {
 	echo "- $0 restore [docker archive] : lance une restauration de docker";
 }
 
+log_on_error() {
+  local RESULT="$1"
+  local ERROR_MESSAGE="$2"
+
+  if [ "$RESULT" -gt 0 ]
+  then
+    echo "$ERROR_MESSAGE" 1>&2
+  fi
+  return "$RESULT"
+}
+
 connect_openvpn() {
   local VPN_CONFIG="$1";
 
   ovpn=$(mktemp --suffix=.ovpn)
   echo "$VPN_CONFIG" > ${ovpn}
   sudo openvpn --dev tun0 --daemon --config ${ovpn}
+  log_on_error "$?" "Openvpn connection failed"
 }
 
 ping_with_timeout() {
@@ -20,6 +32,7 @@ ping_with_timeout() {
   local TIMEOUT="${2:-10}"
 
   timeout ${TIMEOUT} bash -c "until ping -c1 ${IP}; do :; done"
+  log_on_error "$?" "IP not accessible after ${TIMEOUT} seconds"
 }
 
 connect_openvpn_and_check_connection() {
