@@ -15,6 +15,22 @@ connect_openvpn() {
   sudo openvpn --dev tun0 --daemon --config ${ovpn}
 }
 
+ping_with_timeout() {
+  local IP="$1"
+  local TIMEOUT="${2:-10}"
+
+  timeout ${TIMEOUT} bash -c "until ping -c1 ${IP}; do :; done"
+}
+
+connect_openvpn_and_check_connection() {
+  local VPN_CONFIG="$1";
+  local IP="$2"
+  local TIMEOUT="${3:-10}"
+
+  connect_openvpn "${VPN_CONFIG}" || return $?
+  ping_with_timeout "${IP}" "${TIMEOUT}" || return $?
+}
+
 livraison() {
 	local IP="$1";
 	local ARG="$2";
@@ -25,7 +41,11 @@ livraison() {
   echo ${#VPN_CONFIG}
   echo ${#ENV}
 
-  [ "$VPN_CONFIG" != "" ] && (connect_openvpn "${VPN_CONFIG}" || return $?);
+  if [ "$VPN_CONFIG" != "" ]
+  then
+    connect_openvpn_and_check_connection "${VPN_CONFIG}" "${IP}" \
+      || return $?
+  fi
 	[ "$ARG" != "" ] && RSA="-i $ARG" || RSA="";
 	read -r -d "" SCRIPT <<EOF
 	  if [[ ! -e /home/docker/importer ]]
