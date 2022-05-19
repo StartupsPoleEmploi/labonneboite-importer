@@ -149,6 +149,8 @@ services:
       timeout: 10s
       retries: 5
     restart: unless-stopped
+    expose:
+      - 8080
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
@@ -256,6 +258,8 @@ services:
       timeout: 10s
       retries: 5
     restart: unless-stopped
+    expose:
+      - 5555
     depends_on:
       <<: *airflow-common-depends-on
       airflow-worker:
