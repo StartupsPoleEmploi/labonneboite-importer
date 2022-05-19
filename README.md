@@ -14,7 +14,7 @@ This projet use an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load)
 
 ## Dependances
 
-- docker-compose
+- docker-compose >= 1.27
 - htpasswd
 
 ### dev
