@@ -66,14 +66,14 @@ livraison() {
 	  set -e
 	  if [[ ! -e /home/docker/importer ]]
 	  then
-      git clone git@github.com:StartupsPoleEmploi/lbb-importer.git /home/docker/importer
+      git clone https://github.com/StartupsPoleEmploi/lbb-importer.git /home/docker/importer
 	  fi
 		cd /home/docker/importer;
 		git reset --hard HEAD;
-		git checkout $CI_COMMIT_BRANCH &&
-		git pull &&
-		[ "$ENV" != "" ] && echo "$ENV" >.env; \
-		docker-compose up -d --build 1>/dev/null && \
+		git checkout $CI_COMMIT_BRANCH;
+		git pull;
+		[ "$ENV" != "" ] && echo "$ENV" >.env || true;
+		docker-compose up -d --build 1>/dev/null;
 		docker-compose restart;
 EOF
 	[ "$ENV" != "" ] && SCRIPT=`echo "export ENV='$ENV'; $SCRIPT"`;
