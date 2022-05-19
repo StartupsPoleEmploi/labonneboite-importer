@@ -1,10 +1,27 @@
 #!/bin/bash
 
 usage() {
-	echo "Usage:";
-	echo "- $0 connect_vpn [openvpn config] [timeout in seconds (default: 30)] : connecte le serveur au vpn";
-	echo "- $0 deploy [IP] [path to private ssh key] [env vars to write to .env] : lance une mise en production";
-	echo "- $0 restore [docker archive] : lance une restauration de docker";
+  cat <<EOF
+Usage:
+
+$0 [ connect_openvpn | deploy | restore ] [ ARGS ... ]
+
+- connect_openvpn : connecte le serveur au vpn
+- deploy : lance une mise en production
+- restore : list les backups disponible ou lance une restauration de docker
+
+$0 connect_vpn VPN_CONFIG [TIMEOUT]
+- VPN_CONFIG: openvpn config
+- TIMEOUT: timeout in seconds (default: 30)
+
+$0 deploy IP [ IDENTITY_FILE [ ENV [ COMMIT_REF ] ] ]
+- IP: server IP address
+- IDENTITY_FILE: path to private ssh key. Use ssh default ssk key if empty (default: "")
+- ENV: env vars to write to .env. Don't change the .env if empty (default: "")
+
+$0 restore [ ARCHIVE_NAME ]
+- ARCHIVE_NAME: docker archive to restore. List the available archive if empty (default: "")
+EOF
 }
 
 log_on_error() {
@@ -70,8 +87,8 @@ CMD=$1;
 case $CMD in
 	deploy)
 		IP="$2";
-    IDENTITY_FILE="$3";
-		ENV="$4";
+    IDENTITY_FILE="${3:-}";
+		ENV="${4:-}";
 
 		livraison "$IP" "$IDENTITY_FILE" "$ENV";
 		;;
@@ -81,7 +98,7 @@ case $CMD in
     connect_openvpn "$VPN_CONFIG"
     ;;
 	restore)
-	  ARCHIVE_NAME="$2"
+	  ARCHIVE_NAME="${2:-}"
 
 		if [ "$ARCHIVE_NAME" = "" ];
 		then
