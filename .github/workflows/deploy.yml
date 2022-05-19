@@ -22,7 +22,7 @@ jobs:
       - name: deploy
         run: |
           bash .execute.sh connect_openvpn "$VPN_CONFIG"
-          bash .execute.sh deploy "$IP" "" "$ENV"
+          bash .execute.sh deploy "$IP" "" "$ENV" "$GITHUB_SHA"
         env:
           IP: ${{ secrets.IP }}
           ENV: ${{ secrets.ENV }}

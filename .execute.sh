@@ -2,25 +2,34 @@
 
 usage() {
   cat <<EOF
-Usage:
+Usages:
 
-$0 [ connect_openvpn | deploy | restore ] [ ARGS ... ]
+  $0 ACTION [ ARGS ... ]
 
-- connect_openvpn : connecte le serveur au vpn
-- deploy : lance une mise en production
-- restore : list les backups disponible ou lance une restauration de docker
+ACTIONS
+  connect_vpn   Connecte le serveur au vpn
+  deploy        Lance une mise en production
+  restore       List les backups disponible ou lance une restauration de docker
 
-$0 connect_vpn VPN_CONFIG [TIMEOUT]
-- VPN_CONFIG: openvpn config
-- TIMEOUT: timeout in seconds (default: 30)
+ARGS
 
-$0 deploy IP [ IDENTITY_FILE [ ENV [ COMMIT_REF ] ] ]
-- IP: server IP address
-- IDENTITY_FILE: path to private ssh key. Use ssh default ssk key if empty (default: "")
-- ENV: env vars to write to .env. Don't change the .env if empty (default: "")
+connect_vpn VPN_CONFIG [TIMEOUT]
 
-$0 restore [ ARCHIVE_NAME ]
-- ARCHIVE_NAME: docker archive to restore. List the available archive if empty (default: "")
+  VPN_CONFIG     openvpn config
+  TIMEOUT        timeout in seconds (default: 30)
+
+
+deploy IP [ IDENTITY_FILE [ ENV [ COMMIT_REF ] ] ]
+
+  IP             server IP address
+  IDENTITY_FILE  path to private ssh key. Use ssh default ssk key if empty (default: "")
+  ENV            env vars to write to .env. Don't change the .env if empty (default: "")
+  COMMIT_REF     commit ref to be deploy (default: $CI_COMMIT_SHA or $GITHUB_SHA)
+
+
+restore [ ARCHIVE_NAME ]
+
+  ARCHIVE_NAME   docker archive to restore. List the available archive if empty (default: "")
 EOF
 }
 
@@ -58,8 +67,9 @@ connect_openvpn() {
 
 livraison() {
 	local IP="$1";
-	local IDENTITY_FILE="$2";
-	local ENV="$3";
+	local IDENTITY_FILE="${2:-}";
+	local ENV="${3:-}";
+	local COMMIT_REF="${5:-${CI_COMMIT_SHA:-${GITHUB_SHA}}}"
 
 	[ "$IDENTITY_FILE" != "" ] && RSA="-i $IDENTITY_FILE" || RSA="";
 	read -r -d "" SCRIPT <<EOF
@@ -69,9 +79,8 @@ livraison() {
       git clone https://github.com/StartupsPoleEmploi/lbb-importer.git /home/docker/importer
 	  fi
 		cd /home/docker/importer;
-		git reset --hard HEAD;
-		git checkout $CI_COMMIT_BRANCH;
-		git pull;
+		git fetch --all --prune
+		git checkout $COMMIT_REF;
 		[ "$ENV" != "" ] && echo "$ENV" >.env || true;
 		docker-compose up -d --build 1>/dev/null;
 		docker-compose restart;
@@ -89,6 +98,7 @@ case $CMD in
 		IP="$2";
     IDENTITY_FILE="${3:-}";
 		ENV="${4:-}";
+		COMMIT_REF="${5:-}"
 
 		livraison "$IP" "$IDENTITY_FILE" "$ENV";
 		;;
