@@ -46,6 +46,7 @@ livraison() {
 
 	[ "$IDENTITY_FILE" != "" ] && RSA="-i $IDENTITY_FILE" || RSA="";
 	read -r -d "" SCRIPT <<EOF
+	  set -e
 	  if [[ ! -e /home/docker/importer ]]
 	  then
       git clone git@github.com:StartupsPoleEmploi/lbb-importer.git /home/docker/importer
