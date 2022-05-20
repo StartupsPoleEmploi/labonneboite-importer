@@ -47,7 +47,7 @@ start local env :
 make startserver
 ```
 
-access : https://127.0.0.1/ (HTTP_PORT may be changed in .env)
+access : https://127.0.0.1:8080/ (HTTP_PORT may be changed in .env)
 
 # Environment variable
 
@@ -61,7 +61,7 @@ access : https://127.0.0.1/ (HTTP_PORT may be changed in .env)
 | IMPORTER_MYSQL_ROOT_PASSWORD  | importer               | ...                                                                 |
 | IMPORTER_MYSQL_PASSWORD       | importer               | ...                                                                 |
 | IMPORTER_MYSQL_LOGIN          | importer               | ...                                                                 |
-| HTTP_PORT                     | 80                     | public HTTP port of the airflow webserver                           |
+| HTTP_PORT                     | 8080                   | public HTTP port of the airflow webserver                           |
 | FLOWER_HTTP_PORT              | 5555                   | public HTTP port of FLower : the Celery monitoring tool             |
 | ENV_TYPE                      | production             | -                                                                   |
 | _AIRFLOW_WWW_USER_USERNAME    | airflow                | Only used on the 1st init                                           |
