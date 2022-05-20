@@ -15,6 +15,8 @@ This projet use an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load)
 ## Dependances
 
 - docker-compose >= 1.27
+- git (to retrieve lbb-common project from the requirements)
+- pg_config (`libpq-dev` / ubuntu)
 
 ### dev
 
@@ -25,7 +27,6 @@ This projet use an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load)
   - mysqlclient (`libmysqlclient-dev`)
   - ffi (`libffi-dev`)
 - gcc-11 (pour installer compiler python avec la `libffi`)
-- pg_config (`libpq-dev` / ubuntu)
 
 ## Developement
 
