@@ -16,6 +16,11 @@ _PIP_ADDITIONAL_REQUIREMENTS := $(shell cat requirements.txt)
 OUTPUT_DIR	?= ./importer/var/output
 AIRFLOW_UID	?= 50000
 
+MIGRATION_MESSAGE	?=
+
+# utils
+UID	:= $(shell id -u)
+
 .DEFAULT_GOAL := help
 
 all: init build startserver  ## init and start the local server
@@ -49,8 +54,6 @@ startserver:  ## Start local servers
 	docker-compose up --build --detach
 	docker-compose restart
 
-MIGRATION_MESSAGE	?=
-UID	:= $(shell id -u)
 migration:
 	docker-compose run --rm -u "${UID}" -e HOME=/home/airflow/ alembic-cli revision --autogenerate -m "${MIGRATION_MESSAGE}"
 
