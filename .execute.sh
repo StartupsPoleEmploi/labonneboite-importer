@@ -82,7 +82,7 @@ livraison() {
 		git fetch --all --prune
 		git checkout $COMMIT_REF;
 		[ "$ENV" != "" ] && echo "$ENV" >.env || true;
-		docker-compose up -d --build 1>/dev/null;
+		docker-compose up -d --build --remove-orphans 1>/dev/null;
 		docker-compose restart;
 EOF
 	[ "$ENV" != "" ] && SCRIPT=`echo "export ENV='$ENV'; $SCRIPT"`;

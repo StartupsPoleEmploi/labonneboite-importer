@@ -10,10 +10,6 @@ airflow/webserver_config.py
 # docker volumes
 postgres/var/lib/postgresql/data/*
 importer-mysql/var/lib/mysql/data/*
-nginx/var/log/*
-
-# security
-nginx/etc/nginx/auth/.htpasswd
 
 # dev
 __pycache__

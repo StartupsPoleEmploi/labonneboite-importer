@@ -25,14 +25,8 @@ all: init build startserver  ## init and start the local server
 
 init: init-venv init-airflow  ## init local environement
 
-init-airflow: init-airflow-dir init-airflow-basic-auth init-airflow-output-dir  ## init airflow (available env var : USER and PASSWORD)
+init-airflow: init-airflow-dir init-airflow-output-dir  ## init airflow (available env var : USER and PASSWORD)
 	_AIRFLOW_WWW_USER_USERNAME="$${USER}" _AIRFLOW_WWW_USER_PASSWORD="$${PASSWORD}" docker-compose up airflow-init
-
-init-airflow-dir:
-	mkdir -p ./dags ./logs ./importer
-
-init-airflow-basic-auth:
-	htpasswd -cb nginx/etc/nginx/auth/.htpasswd "${USER}" "${PASSWORD}"
 
 init-venv: ${PYTHON} init-pip requirements.dev.txt ${VIRTUAL_ENV}/bin/pip-sync  ## init local virtual env
 	${VIRTUAL_ENV}/bin/pip-sync requirements.dev.txt
