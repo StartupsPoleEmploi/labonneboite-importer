@@ -7,9 +7,9 @@ The importer job is to recreate from scratch a complete dataset of offices base 
 This projet use an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load) ([Apache **Airflow**](https://airflow.apache.org/)) to extract data from the different files and other sources, transform them in LBB Offices (_missing ref_) and to load them in the [La bonne boite database](https://github.com/startupsPoleEmploi/labonneboite)
 
 ```
-⟥ load_etablissements ⟶ geocode ⤵
-                                 ⟼
-⟥          load_scores          ⤴
+    ┌─────────┐    ┌──────────────────┐
+───►│  untar  ├───►│  extract_office  │
+    └─────────┘    └──────────────────┘
 ```
 
 ## Dependances
