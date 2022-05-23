@@ -58,6 +58,8 @@ access : https://127.0.0.1:8080/ (HTTP_PORT may be changed in .env)
 | INPUT_DIR                      | ./importer/var/input  | directory where the importer file are read                                                                     |
 | OUTPUT_DIR                     | ./importer/var/output | directory where the importer write it results (and temporary files)                                            |
 | AIRFLOW_UID                    | 50000                 | uid of the airflow user                                                                                        |
+| POSTGRES_USER                  | airflow               | airflow database for core and workers                                                                          | 
+| POSTGRES_PASSWORD              | airflow               | ...                                                                                                            |
 | IMPORTER_MYSQL_SCHEMA          | importer              | db info of the importer database                                                                               |
 | IMPORTER_MYSQL_ROOT_PASSWORD   | importer              | ...                                                                                                            |
 | IMPORTER_MYSQL_PASSWORD        | importer              | ...                                                                                                            |
@@ -71,4 +73,4 @@ access : https://127.0.0.1:8080/ (HTTP_PORT may be changed in .env)
 
 # Run project
 
-See deploy function in the .execute shell script
+See deploy function in the [.execute shell script](./.execute.sh#L70)

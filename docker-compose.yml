@@ -38,6 +38,8 @@ x-airflow-common:
     dockerfile: ./airflow/Dockerfile
   environment:
     &airflow-common-env
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
   volumes:
     - ./importer/dags:/opt/airflow/dags:ro
@@ -59,8 +61,8 @@ services:
   postgres:
     image: postgres:13
     environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
+      POSTGRES_USER: ${POSTGRES_USER:-airflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airflow}
       POSTGRES_DB: airflow
     expose:
       - 5432
