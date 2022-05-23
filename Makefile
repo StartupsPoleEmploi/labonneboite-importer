@@ -1,22 +1,24 @@
+AIRFLOW = ${AIRFLOW_TEST_ENV} ${VIRTUAL_ENV}/bin/airflow
 AIRFLOW_TEST_ENV= \
-	AIRFLOW_HOME=${PWD}/airflow \
+	AIRFLOW_HOME=/tmp/airflow \
 	AIRFLOW__CORE__DAGS_FOLDER=${PWD}/importer/dags \
 	AIRFLOW__CORE__PLUGINS_FOLDER=${PWD}/importer/plugins
+AIRFLOW_UID	?= 50000
+
+MIGRATION_MESSAGE	?=
+
+PYTHON = ${VIRTUAL_ENV}/bin/python
+PYTHON_VERSION_FILE = .python-version
+PYTHON_INSTALLED_VERSION_FILE=.installed-python-version
+PYTHON_VERSION := $(shell cat ${PYTHON_VERSION_FILE})
+
 TEST_FILES ?= importer
 TEST_COV_ARGS ?= --cov importer --cov-fail-under  90
 TEST_ARGS ?= ${TEST_COV_ARGS}
 
 VIRTUAL_ENV ?= ${PWD}/venv
-PYTHON = ${VIRTUAL_ENV}/bin/python
-PYTHON_VERSION_FILE = .python-version
-PYTHON_INSTALLED_VERSION_FILE=.installed-python-version
-PYTHON_VERSION := $(shell cat ${PYTHON_VERSION_FILE})
+
 _PIP_ADDITIONAL_REQUIREMENTS := $(shell cat requirements.txt)
-
-OUTPUT_DIR	?= ./importer/var/output
-AIRFLOW_UID	?= 50000
-
-MIGRATION_MESSAGE	?=
 
 # utils
 UID	:= $(shell id -u)
@@ -30,18 +32,14 @@ all: init build startserver  ## init and start the local server
 
 init: init-venv init-airflow  ## init local environement
 
-init-airflow: init-airflow-dir init-airflow-output-dir  ## init airflow (available env var : USER and PASSWORD)
+init-airflow: init-airflow-dir  ## init airflow (available env var : USER and PASSWORD)
 	_AIRFLOW_WWW_USER_USERNAME="$${USER}" _AIRFLOW_WWW_USER_PASSWORD="$${PASSWORD}" docker-compose up airflow-init
 
 init-venv: ${PYTHON} init-pip requirements.dev.txt ${VIRTUAL_ENV}/bin/pip-sync  ## init local virtual env
 	${VIRTUAL_ENV}/bin/pip-sync requirements.dev.txt
 
 init-pip: ${PYTHON}
-	${PYTHON} -m pip install --upgrade pip
-
-init-airflow-output-dir:
-	#	mkdir -p "${OUTPUT_DIR}"
-	#	chown "${AIRFLOW_UID}:0" ${OUTPUT_DIR}
+	${PYTHON} -m pip install --upgrade pip==22.0.4
 
 
 # Utils
@@ -71,11 +69,11 @@ test-run:  ## Run tests
 test-init: init-venv test-init-db test-init-variables  ## Init tests
 
 test-init-db:
-	${AIRFLOW_TEST_ENV} airflow db reset --yes
+	${AIRFLOW} db reset --yes
 
 test-init-variables:
-	${AIRFLOW_TEST_ENV} airflow variables import ./importer/settings/default.json
-	${AIRFLOW_TEST_ENV} airflow variables import ./importer/settings/local.json
+	${AIRFLOW} variables import ./importer/settings/default.json
+	${AIRFLOW} variables import ./importer/settings/local.json
 
 # Lint
 # ----
@@ -112,7 +110,7 @@ ${PYTHON}: ${PYTHON_INSTALLED_VERSION_FILE}
 
 ${VIRTUAL_ENV}/bin/pip-sync: ${VIRTUAL_ENV}/bin/pip-compile
 ${VIRTUAL_ENV}/bin/pip-compile: ${PYTHON}
-	${PYTHON} -m pip install pip-tools
+	${PYTHON} -m pip install pip-tools==6.6.0
 
 
 # Requirements
