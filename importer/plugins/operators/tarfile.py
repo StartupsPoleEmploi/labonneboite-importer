@@ -72,13 +72,6 @@ class UntarOperator(BaseTarOperator):
     Untar the source_path in the dest_path.
     """
 
-    @staticmethod
-    def directory_with_ending_sep(directory: Path) -> Path:
-        if directory[-1] == os.sep:
-            return directory
-        else:
-            return directory + os.sep
-
     def is_the_archive_as_relative_path_outside_of_directory(self, archive: TarFile, directory: Path) -> bool:
         absolute_directory = directory.absolute()
         for elementpath in archive.getnames():
