@@ -82,7 +82,8 @@ run airflow connections list --conn-id fs_default | grep fs_default > /dev/null 
   || run airflow connections add fs_default --conn-type fs
 
 run airflow connections list --conn-id mysql_importer | grep mysql_importer > /dev/null \
-  || run airflow connections add mysql_importer \
+  && run airflow connections delete mysql_importer
+run airflow connections add mysql_importer \
     --conn-host ${IMPORTER_MYSQL_HOST:-importer-mysql} \
     --conn-login ${IMPORTER_MYSQL_LOGIN:-importer} \
     --conn-password ${IMPORTER_MYSQL_PASSWORD:-importer} \
