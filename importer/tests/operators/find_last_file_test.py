@@ -23,7 +23,7 @@ DATE_AFTER_START = DateTime(2020, 4, 15, 2, 0, 0, tzinfo=UTC)
 NEXT_RUN_DATE = DateTime(2020, 5, 1, 2, 0, 0, tzinfo=UTC)
 
 
-class TestUntarOperator(TestCase):
+class TestFindLastFileOperator(TestCase):
 
     def _get_context(self) -> Context:
         return Context(**{
