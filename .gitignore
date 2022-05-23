@@ -1,0 +1,22 @@
+.env
+
+# local test importer
+airflow/airflow.db
+airflow/airflow-webserver.pid
+airflow/logs
+airflow/opt
+airflow/webserver_config.py
+
+# docker volumes
+postgres/var/lib/postgresql/data/*
+importer-mysql/var/lib/mysql/data/*
+
+# dev
+__pycache__
+*.pyc
+venv/
+.installed-python-version
+.coverage
+importer/var/*
+.idea/
+docker-compose.override.yml

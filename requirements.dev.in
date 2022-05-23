@@ -1,0 +1,8 @@
+-r requirements.txt
+coverage
+flake8
+isort
+mypy
+yapf
+pytest
+pytest-cov
