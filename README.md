@@ -52,21 +52,22 @@ access : https://127.0.0.1:8080/ (HTTP_PORT may be changed in .env)
 
 # Environment variable
 
-| Var name                      | Default                | Note                                                                |
-|-------------------------------|------------------------|---------------------------------------------------------------------|
-| _PIP_ADDITIONAL_REQUIREMENTS  |                        |                                                                     |
-| INPUT_DIR                     | ./importer/var/input   | directory where the importer file are read                          |
-| OUTPUT_DIR                    | ./importer/var/output  | directory where the importer write it results (and temporary files) |
-| AIRFLOW_UID                   | 50000                  | uid of the airflow user                                             |
-| IMPORTER_MYSQL_SCHEMA         | importer               | db info of the importer database                                    |
-| IMPORTER_MYSQL_ROOT_PASSWORD  | importer               | ...                                                                 |
-| IMPORTER_MYSQL_PASSWORD       | importer               | ...                                                                 |
-| IMPORTER_MYSQL_LOGIN          | importer               | ...                                                                 |
-| HTTP_PORT                     | 8080                   | public HTTP port of the airflow webserver                           |
-| FLOWER_HTTP_PORT              | 5555                   | public HTTP port of FLower : the Celery monitoring tool             |
-| ENV_TYPE                      | production             | -                                                                   |
-| _AIRFLOW_WWW_USER_USERNAME    | airflow                | Only used on the 1st init                                           |
-| _AIRFLOW_WWW_USER_PASSWORD    | airflow                | Only used on the 1st init                                           |
+| Var name                       | Default               | Note                                                                                                           |
+|--------------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------|
+| _PIP_ADDITIONAL_REQUIREMENTS   |                       |                                                                                                                |
+| INPUT_DIR                      | ./importer/var/input  | directory where the importer file are read                                                                     |
+| OUTPUT_DIR                     | ./importer/var/output | directory where the importer write it results (and temporary files)                                            |
+| AIRFLOW_UID                    | 50000                 | uid of the airflow user                                                                                        |
+| IMPORTER_MYSQL_SCHEMA          | importer              | db info of the importer database                                                                               |
+| IMPORTER_MYSQL_ROOT_PASSWORD   | importer              | ...                                                                                                            |
+| IMPORTER_MYSQL_PASSWORD        | importer              | ...                                                                                                            |
+| IMPORTER_MYSQL_LOGIN           | importer              | ...                                                                                                            |
+| HTTP_PORT                      | 8080                  | public HTTP port of the airflow webserver                                                                      |
+| FLOWER_HTTP_PORT               | 5555                  | public HTTP port of FLower : the Celery monitoring tool                                                        |
+| ENV_TYPE                       | production            | -                                                                                                              |
+| _AIRFLOW_WWW_USER_USERNAME     | airflow               | Only used on the 1st init                                                                                      |
+| _AIRFLOW_WWW_USER_PASSWORD     | airflow               | Only used on the 1st init                                                                                      |
+| AIRFLOW__WEBSERVER__SECRET_KEY |                       | See [airflow config](https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html#secret-key) |
 
 # Run project
 

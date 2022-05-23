@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - refacto/PELBB-411/migrate-importer-in-airflow
 jobs:
   deploy:
     runs-on: ubuntu-20.04
