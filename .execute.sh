@@ -95,18 +95,17 @@ CMD=$1;
 
 case $CMD in
 	deploy)
-		IP="$2";
-    IDENTITY_FILE="${3:-}";
+		IDENTITY_FILE="${3:-}";
 		ENV="${4:-}";
 		COMMIT_REF="${5:-}"
 
 		livraison "$IP" "$IDENTITY_FILE" "$ENV";
 		;;
   connect_openvpn)
-    VPN_CONFIG="$2";
+		VPN_CONFIG="$2";
 
-    connect_openvpn "$VPN_CONFIG"
-    ;;
+		connect_openvpn "$VPN_CONFIG"
+		;;
 	restore)
 	  ARCHIVE_NAME="${2:-}"
 
