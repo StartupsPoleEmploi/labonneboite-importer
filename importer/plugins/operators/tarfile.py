@@ -47,10 +47,10 @@ class BaseTarOperator(BaseOperator):
 
     def _get_fs_base_path(self, fs_conn_id: str) -> Path:
         """Get the bash path of the fs_conn_id."""
-        fshook = self._get_fshook(self.source_fs_conn_id)
+        fshook = self._get_fshook(fs_conn_id)
         return Path(fshook.get_path())
 
-    def _get_fullpath(self, fs_conn_id: str, subpath: str) -> Path:
+    def _get_fullpath(self, fs_conn_id: str, subpath: Union[str, Path]) -> Path:
         """Get the full path for a file system connexion and it subpath."""
         base_path = self._get_fs_base_path(fs_conn_id)
         fullpath = base_path / subpath
