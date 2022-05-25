@@ -21,6 +21,15 @@ def create_office(**overloaded_kwargs):
     return Office(**kwargs)
 
 
+def create_office_with_default():
+    return create_office(
+        trancheeffectif=None,
+        flag_junior=False,
+        flag_senior=False,
+        flag_handicap=False
+    )
+
+
 class OfficeTestCase(TestCase):
 
     @patch('operators.extract_offices.get_department_from_zipcode', return_value="OK")
@@ -57,12 +66,15 @@ class TestExtractOfficesOperator(TestCase):
                                           task_id="test_task",
                                           chunk_size=1000,
                                           _fs_hook=mock_fs_hook)
+        expected_result = create_office_with_default()
+
         result = next(operator._get_offices_from_file())
+
         self.assertIsInstance(result, dict)
         self.assertEqual(9, len(result))
         self.assertIn("00000000001941", result)
         self.maxDiff = None
-        self.assertEqual(result["00000000001941"], create_office())
+        self.assertEqual(result["00000000001941"], expected_result)
 
     def test_get_offices_from_file_with_chunk(self):
         mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
@@ -103,6 +115,19 @@ class TestExtractOfficesOperator(TestCase):
             replace=True,
         )
 
+    def test_NULL_values_are_saved_with_default(self):
+        mock_mysql_hook = MagicMock(MySqlHook)
+        mock_mysql_hook.insert_rows = Mock()
+        with patch('operators.extract_offices.FIELDS', ['flag_junior']):
+            self.execute(_mysql_hook=mock_mysql_hook)
+
+        mock_mysql_hook.insert_rows.assert_called_with(
+            'test_table',
+            [[False], [False], [False], [False]],
+            ['flag_junior'],
+            replace=True,
+        )
+
     def test_execute_delete_expired_sirets(self):
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.get_records = Mock(return_value=[("51837000000001",), ("51837000000002",)])
@@ -110,7 +135,7 @@ class TestExtractOfficesOperator(TestCase):
         self.execute(_mysql_hook=mock_mysql_hook)
 
         mock_mysql_hook.get_records.assert_called_once_with(
-            'SELECT "siret" FROM "test_table"'
+            'SELECT siret FROM test_table'
         )
         mock_mysql_hook.run.assert_called_once()
         expected_query_1 = 'DELETE FROM "test_table" WHERE "siret" IN ("51837000000001", "51837000000002")'
