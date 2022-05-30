@@ -6,7 +6,6 @@ from typing import Set
 
 from airflow.hooks.filesystem import FSHook
 from airflow.models.baseoperator import BaseOperator
-from airflow.providers.mysql.hooks.mysql import MySqlHook
 from labonneboite_common.chunk import chunks
 from labonneboite_common.departements import DEPARTEMENTS
 from labonneboite_common.siret import is_siret
@@ -15,6 +14,7 @@ from sqlalchemy import ColumnDefault
 from models import ExportableOffice
 from utils.csv import UnquotedSemiColonDialect
 from utils.get_departement_from_zipcode import get_department_from_zipcode
+from utils.mysql_hook import MySqlHookOnDuplicateKey
 
 if TYPE_CHECKING:
     from common.types import Context
@@ -136,7 +136,7 @@ class ExtractOfficesOperator(BaseOperator):
                  db_conn_id: str = 'mysql_importer',
                  chunk_size: int = 100000,
                  _fs_hook: Optional[FSHook] = None,
-                 _mysql_hook: Optional[MySqlHook] = None,
+                 _mysql_hook: Optional[MySqlHookOnDuplicateKey] = None,
                  **kwargs: Any
                  ):
         self.offices_filename = offices_filename
@@ -159,9 +159,9 @@ class ExtractOfficesOperator(BaseOperator):
         fullpath = base_path / self.offices_filename
         return str(fullpath)
 
-    def _get_mysql_hook(self) -> MySqlHook:
+    def _get_mysql_hook(self) -> MySqlHookOnDuplicateKey:
         if not self._mysql_hook:
-            self._mysql_hook = MySqlHook(self.db_conn_id)
+            self._mysql_hook = MySqlHookOnDuplicateKey(self.db_conn_id)
         return self._mysql_hook
 
     def _log_debug(self, existing_set: Set[str], creatable_sirets: Set[str]) -> None:
@@ -210,7 +210,7 @@ class ExtractOfficesOperator(BaseOperator):
                 getattr(office, key) for key in FIELDS
             ]
             for office in csv_offices.values()
-        ], FIELDS, replace=True)
+        ], FIELDS, on_duplicate_key_update=True)
 
     @staticmethod
     def check_fields() -> bool:
