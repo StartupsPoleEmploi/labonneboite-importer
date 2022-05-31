@@ -30,8 +30,8 @@ class BaseTarOperator(BaseOperator):
         :params errorlevel: TarFile errorlevel (see:
             [tarfile documentation](https://docs.python.org/3.8/library/tarfile.html#tarfile.TarFile))
         """
-        self.source_path = source_path
-        self.dest_path = dest_path
+        self.source_path = str(source_path)
+        self.dest_path = str(dest_path)
         self.source_fs_conn_id = source_fs_conn_id
         self.dest_fs_conn_id = dest_fs_conn_id
         self.errorlevel = errorlevel

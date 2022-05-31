@@ -31,19 +31,28 @@ with DAG("load-etablissements-2022-03",
          catchup=False,
          schedule_interval="@daily") as dag:
     start_task = DummyOperator(task_id="start")
+    make_tmp_dir = BashOperator(task_id='make_tmp_dir', bash_command='mkdir -p "${DIR}"',
+                                env={"DIR": str(working_tmp_dir)})
 
     with TaskGroup("untar") as untar_group:
         find_last_file = FindLastFileOperator(
             task_id='find_last_tar',
             filepath=filepath
         )
+        copy_last_file_locally = BashOperator(
+            task_id='copy_last_file_locally',
+            bash_command='rsync -h --progress ${FROM} ${TO}',
+            env={
+                'FROM': "{{ task_instance.xcom_pull(task_ids='" + find_last_file.task_id + "') }}",
+                'TO': str(working_tmp_dir / 'source.tar')
+            })
         untar_last_file = UntarOperator(
             task_id='untar_last_tar',
-            source_path="{{ task_instance.xcom_pull(task_ids='" + find_last_file.task_id + "', key='return_value') }}",
+            source_path=working_tmp_dir / 'source.tar',
             dest_path=working_tmp_dir
         )
 
-        find_last_file >> untar_last_file
+        find_last_file >> copy_last_file_locally >> untar_last_file
 
     with TaskGroup("offices") as offices_group:
         office_path_sensor_task = FileSensor(  # type: ignore [no-untyped-call]
@@ -73,7 +82,7 @@ with DAG("load-etablissements-2022-03",
     )
     end_task = DummyOperator(task_id="end")
 
-start_task >> untar_group
+untar_group << [start_task, make_tmp_dir]
 
 untar_group >> offices_group >> join
 untar_group >> extract_scores_task >> join
