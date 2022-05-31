@@ -25,11 +25,11 @@ filepath = data_path / Variable.get('etab_file_glob')
 working_tmp_dir = output_path / 'tmp' / "{{ts_nodash}}"
 offices_path = working_tmp_dir / "etablissements" / "etablissements.csv"
 
-with DAG("load-etablissements-2022-03",
+with DAG("load-etablissements-2022-04",
          default_args=default_args,
-         start_date=datetime.datetime(2022, 3, 1),
+         start_date=datetime.datetime(2022, 4, 16),
          catchup=False,
-         schedule_interval="@daily") as dag:
+         schedule_interval="0 3 15 * *") as dag:
     start_task = DummyOperator(task_id="start")
     make_tmp_dir = BashOperator(task_id='make_tmp_dir', bash_command='mkdir -p "${DIR}"',
                                 env={"DIR": str(working_tmp_dir)})
