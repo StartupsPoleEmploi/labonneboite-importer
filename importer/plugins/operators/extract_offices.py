@@ -1,7 +1,7 @@
 import csv
 import itertools
 from pathlib import Path
-from typing import Optional, List, Generator, NamedTuple, Dict, Tuple, TYPE_CHECKING, Iterable, Iterator, Any, Union
+from typing import Optional, List, Generator, Dict, Tuple, TYPE_CHECKING, Iterable, Iterator, Any, NamedTuple
 from typing import Set
 
 from airflow.hooks.filesystem import FSHook
@@ -10,7 +10,9 @@ from airflow.providers.mysql.hooks.mysql import MySqlHook
 from labonneboite_common.chunk import chunks
 from labonneboite_common.departements import DEPARTEMENTS
 from labonneboite_common.siret import is_siret
+from sqlalchemy import ColumnDefault
 
+from models import ExportableOffice
 from utils.csv import SemiColonDialect
 from utils.get_departement_from_zipcode import get_department_from_zipcode
 
@@ -47,8 +49,8 @@ def add_quote(string: str, quote: str = '"') -> str:
     return quote + string + quote
 
 
-def nullable(string: str) -> Optional[str]:
-    return None if string == "NULL" else string
+def is_null(string: str) -> bool:
+    return string == 'NULL'
 
 
 class Office(NamedTuple):
@@ -76,6 +78,34 @@ class Office(NamedTuple):
 
     def is_valid(self) -> bool:
         return self._check_department() and self._check_siret()
+
+    @classmethod
+    def without_nulls(cls, *args, **kwargs) -> 'Office':
+        self = cls(*args, **kwargs)
+        new_args: List[Any] = []
+        for key, value in zip(cls._fields, self):
+            new_args.append(cls._get_default_for_null_value(key, value))
+        return cls(*new_args)
+
+    @classmethod
+    def _get_default_for_null_value(cls, key, value) -> Optional[Any]:
+        if is_null(value):
+            return cls._get_default_or_none(key)
+        return value
+
+    @classmethod
+    def _get_default_or_none(cls, key) -> Optional[Any]:
+        default: Optional[ColumnDefault] = ExportableOffice.__table__.columns[key].default
+        if default:
+            return cls._get_column_default(default)
+        return None
+
+    @staticmethod
+    def _get_column_default(default: ColumnDefault) -> Any:
+        default_value = default.arg
+        if default.is_callable:
+            default_value = default.arg()
+        return default_value
 
     def _check_department(self) -> bool:
         return self.departement in DEPARTEMENTS
@@ -116,7 +146,7 @@ class ExtractOfficesOperator(BaseOperator):
         fshook = self._get_fs_hook()
         base_path = Path(fshook.get_path())
         fullpath = base_path / self.offices_filename
-        return fullpath
+        return str(fullpath)
 
     def _get_mysql_hook(self) -> MySqlHook:
         if not self._mysql_hook:
@@ -179,7 +209,7 @@ class ExtractOfficesOperator(BaseOperator):
         result = all(map(Office._fields.__contains__, FIELDS))
         return result
 
-    def _create_delete_sirets_request(self, sirets: Iterable[str]) -> str:
+    def _create_delete_sirets_sql_request(self, sirets: Iterable[str]) -> str:
         comma_separated_sirets = map(add_quote, sirets)
         stringified_sirets = ', '.join(comma_separated_sirets)
         return f'DELETE FROM "{self.destination_table}" WHERE "siret" IN ({stringified_sirets})'
@@ -187,14 +217,16 @@ class ExtractOfficesOperator(BaseOperator):
     def _delete_deletable_offices(self, deletable_sirets: Set[str]) -> None:
         if deletable_sirets:
             self._get_mysql_hook().run([
-                self._create_delete_sirets_request(sirets)
+                self._create_delete_sirets_sql_request(sirets)
                 for sirets in chunks(list(deletable_sirets), self.chunk_size)
             ])
         self.log.info("%i no longer existing offices deleted.", len(deletable_sirets))
 
     @staticmethod
     def _check_header(header: Dict[str, str]) -> None:
-        assert list(header.keys()) == list(header.values()), f"{list(header.keys())} != {list(header.values())}"
+        keys = list(header.keys())
+        values = list(header.values())
+        assert keys == values, f"{keys} != {values} (^{set(keys) ^ set(values)})"
 
     def _read_file(self) -> Generator[Dict[str, str], None, None]:
 
@@ -205,10 +237,9 @@ class ExtractOfficesOperator(BaseOperator):
             yield from iterator
 
     def _read_offices(self) -> Generator[Office, None, None]:
-        for office in self._read_file():
-            siret = office.pop('siret')
-            nullable_fields = {key: nullable(value) for key, value in office.items()}
-            yield Office(siret, **nullable_fields)
+        for csv_entry in self._read_file():
+            office_without_null = Office.without_nulls(**csv_entry)
+            yield office_without_null
 
     def _get_offices_from_file(self) -> Generator[Dict[str, Office], None, None]:
         self.log.info("extracting %s...", self._get_fullpath())

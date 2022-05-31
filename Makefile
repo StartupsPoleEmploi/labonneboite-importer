@@ -2,7 +2,8 @@ AIRFLOW = ${AIRFLOW_TEST_ENV} ${VIRTUAL_ENV}/bin/airflow
 AIRFLOW_TEST_ENV= \
 	AIRFLOW_HOME=/tmp/airflow \
 	AIRFLOW__CORE__DAGS_FOLDER=${PWD}/importer/dags \
-	AIRFLOW__CORE__PLUGINS_FOLDER=${PWD}/importer/plugins
+	AIRFLOW__CORE__PLUGINS_FOLDER=${PWD}/importer/plugins \
+	PYTHONPATH=${PWD}/importer/dags:${PWD}/importer/plugins
 AIRFLOW_UID	?= 50000
 
 MIGRATION_MESSAGE	?=
