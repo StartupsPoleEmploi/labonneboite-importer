@@ -19,8 +19,9 @@ default_args = {
     "retry_delay": datetime.timedelta(hours=5),
 }
 
-data_path = Path(Variable.get('data_path', default_var='/var/input'))
-output_path = Path(Variable.get('work_path', default_var='/var/output'))
+fs_hook_path = Path('{{ conn.fs_default.path }}')
+data_path = fs_hook_path / Variable.get('data_path', default_var='/var/input')
+output_path = fs_hook_path / Variable.get('work_path', default_var='/var/output')
 filepath = data_path / Variable.get('etab_file_glob')
 working_tmp_dir = output_path / 'tmp' / "{{ts_nodash}}"
 offices_path = working_tmp_dir / "etablissements" / "etablissements.csv"
@@ -31,8 +32,13 @@ with DAG("load-etablissements-2022-04",
          catchup=False,
          schedule_interval="0 3 15 * *") as dag:
     start_task = DummyOperator(task_id="start")
-    make_tmp_dir = BashOperator(task_id='make_tmp_dir', bash_command='mkdir -p "${DIR}"',
-                                env={"DIR": str(working_tmp_dir)})
+    make_tmp_dir = BashOperator(
+        task_id='make_tmp_dir',
+        bash_command="""
+            mkdir -p "${DIR}" && \
+            test -d "${DIR}"
+        """,
+        env={"DIR": str(working_tmp_dir), "TEST": "{{ conn.fs_default.path }}"})
 
     with TaskGroup("untar") as untar_group:
         find_last_file = FindLastFileOperator(
@@ -41,7 +47,7 @@ with DAG("load-etablissements-2022-04",
         )
         copy_last_file_locally = BashOperator(
             task_id='copy_last_file_locally',
-            bash_command='rsync -h --progress ${FROM} ${TO}',
+            bash_command='rsync -h --progress "${FROM}" "${TO}"',
             env={
                 'FROM': "{{ task_instance.xcom_pull(task_ids='" + find_last_file.task_id + "') }}",
                 'TO': str(working_tmp_dir / 'source.tar')
@@ -88,4 +94,4 @@ untar_group >> offices_group >> join
 untar_group >> extract_scores_task >> join
 untar_group >> retrieve_geoloc_task >> join
 
-join >> rmdir >> end_task
+# join >> rmdir >> end_task
