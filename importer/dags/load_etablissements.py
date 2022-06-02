@@ -10,6 +10,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.utils.trigger_rule import TriggerRule
 
 from operators.extract_offices import ExtractOfficesOperator
+from operators.extract_scores import ExtractScoresOperator
 from operators.find_last_file import FindLastFileOperator
 from operators.tarfile import UntarOperator
 
@@ -25,6 +26,7 @@ output_path = fs_hook_path / Variable.get('work_path', default_var='/var/output'
 filepath = data_path / Variable.get('etab_file_glob')
 working_tmp_dir = output_path / 'tmp' / "{{ts_nodash}}"
 offices_path = working_tmp_dir / "etablissements" / "etablissements.csv"
+scores_path = working_tmp_dir / "inference" / "predictions" / "predictions.csv"
 
 with DAG("load-etablissements-2022-04",
          default_args=default_args,
@@ -74,7 +76,20 @@ with DAG("load-etablissements-2022-04",
         )
         office_path_sensor_task >> extract_offices
 
-    extract_scores_task = DummyOperator(task_id="extract_scores")
+    with TaskGroup("scores") as scores_group:
+        score_path_sensor_task = FileSensor(  # type: ignore [no-untyped-call]
+            task_id="scores_path_sensor_task",
+            retries=0,
+            filepath=str(scores_path),
+            doc="Check if the score csv file is set"
+        )
+        extract_scores_task = ExtractScoresOperator(
+            task_id="extract_scores",
+            destination_table='etablissements_raw',
+            scores_filename=str(scores_path),
+        )
+        score_path_sensor_task >> extract_scores_task
+
     retrieve_geoloc_task = DummyOperator(task_id="retrieve_geoloc")
 
     join = DummyOperator(
@@ -91,7 +106,7 @@ with DAG("load-etablissements-2022-04",
 untar_group << [start_task, make_tmp_dir]
 
 untar_group >> offices_group >> join
-untar_group >> extract_scores_task >> join
+untar_group >> scores_group >> join
 untar_group >> retrieve_geoloc_task >> join
 
 # join >> rmdir >> end_task
