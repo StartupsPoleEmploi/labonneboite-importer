@@ -116,6 +116,7 @@ class Office(NamedTuple):
 
 class ExtractOfficesOperator(BaseOperator):
     template_fields = ["offices_filename"]
+    REST_KEY = None
 
     def __init__(self,
                  *args: Any,
@@ -226,20 +227,41 @@ class ExtractOfficesOperator(BaseOperator):
     def _check_header(header: Dict[str, str]) -> None:
         keys = list(header.keys())
         values = list(header.values())
-        assert keys == values, f"{keys} != {values} (^{set(keys) ^ set(values)})"
+        assert keys == values, f"{keys} != {values} (^{set(map(str, keys)) ^ set(map(str, values))})"
+
+    def _get_dict_reader(self, my_file: Iterable[str]) -> Iterable[Dict[str, str]]:
+        reader: Iterable[Dict[str, str]]
+
+        reader = csv.DictReader(
+            my_file,
+            Office._fields,
+            restkey=self.__class__.REST_KEY,
+            dialect=SemiColonDialect
+        )
+
+        return reader
 
     def _read_file(self) -> Generator[Dict[str, str], None, None]:
+        iterator: Iterator[Dict[str, str]]
+        reader: Iterable[Dict[str, str]]
 
         with open(self._get_fullpath()) as my_file:
-            reader: Iterable[Dict[str, str]] = csv.DictReader(my_file, Office._fields, dialect=SemiColonDialect)
-            iterator: Iterator[Dict[str, str]] = iter(reader)
+            reader = self._get_dict_reader(my_file)
+            iterator = iter(reader)
             self._check_header(header=next(iterator))
             yield from iterator
 
     def _read_offices(self) -> Generator[Office, None, None]:
-        for csv_entry in self._read_file():
-            office_without_null = Office.without_nulls(**csv_entry)
+        for csv_row in self._read_file():
+            if self._has_extra_columns(csv_row):
+                self.log.error(f"Invalid row for siret: {csv_row['siret']}")
+                continue
+            office_without_null = Office.without_nulls(**csv_row)
             yield office_without_null
+
+    @classmethod
+    def _has_extra_columns(cls, csv_entry: Dict[str, str]) -> bool:
+        return cls.REST_KEY in csv_entry
 
     def _get_offices_from_file(self) -> Generator[Dict[str, Office], None, None]:
         self.log.info("extracting %s...", self._get_fullpath())

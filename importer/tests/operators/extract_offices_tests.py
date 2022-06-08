@@ -42,10 +42,11 @@ class TestExtractOfficesOperator(TestCase):
     office_filename = join(TEST_DIR, 'data', 'lbb-output-wf-202202150303-extracted',
                            'etablissements', 'etablissements.csv')
 
-    def execute(self, _mysql_hook: Optional[MySqlHook] = None):
+    def execute(self, _mysql_hook: Optional[MySqlHook] = None, offices_filename: Optional[str] = None):
         mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
         mock_mysql_hook = _mysql_hook or MagicMock(MySqlHook)
-        operator = ExtractOfficesOperator(offices_filename=self.office_filename,
+        offices_filename = offices_filename or self.office_filename
+        operator = ExtractOfficesOperator(offices_filename=offices_filename,
                                           destination_table='test_table',
                                           task_id="test_task",
                                           chunk_size=5,
@@ -154,8 +155,14 @@ class TestExtractOfficesOperator(TestCase):
 
     def test_execute_don_t_delete_invalid_sirets(self):
         mock_mysql_hook = MagicMock(MySqlHook)
-        mock_mysql_hook.get_records = Mock(return_value=[("invalid",)])
+        mock_mysql_hook.get_records = Mock(return_value=[("invalids",)])
         mock_mysql_hook.run = Mock()
         self.execute(_mysql_hook=mock_mysql_hook)
 
         mock_mysql_hook.run.assert_not_called()
+
+    def test_file_with_extra_column_should_skip_it(self):
+        try:
+            self.execute(offices_filename=join(TEST_DIR, 'data', 'invalids', 'etablissements_with_extra_row.csv'))
+        except AssertionError:
+            self.fail("With extra row the execution should succeed")
