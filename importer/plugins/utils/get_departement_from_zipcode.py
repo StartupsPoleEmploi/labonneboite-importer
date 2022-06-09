@@ -3,8 +3,8 @@ from typing import Optional
 
 
 @lru_cache(maxsize=128 * 1024)
-def get_department_from_zipcode(zipcode: str) -> Optional[str]:
-    zipcode = str(zipcode).strip()
+def get_department_from_zipcode(zipcode: Optional[str]) -> Optional[str]:
+    zipcode = str(zipcode).strip() if zipcode else ""
 
     if len(zipcode) == 1:
         department = "0%s" % zipcode[0]
