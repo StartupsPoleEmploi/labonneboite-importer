@@ -13,7 +13,7 @@ from labonneboite_common.siret import is_siret
 from sqlalchemy import ColumnDefault
 
 from models import ExportableOffice
-from utils.csv import SemiColonDialect
+from utils.csv import UnquotedSemiColonDialect
 from utils.get_departement_from_zipcode import get_department_from_zipcode
 
 if TYPE_CHECKING:
@@ -246,7 +246,7 @@ class ExtractOfficesOperator(BaseOperator):
             my_file,
             Office._fields,
             restkey=self.__class__.REST_KEY,
-            dialect=SemiColonDialect
+            dialect=UnquotedSemiColonDialect
         )
 
         return reader
