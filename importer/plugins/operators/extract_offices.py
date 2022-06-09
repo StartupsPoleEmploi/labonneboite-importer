@@ -76,8 +76,18 @@ class Office(NamedTuple):
     def departement(self) -> Optional[str]:
         return get_department_from_zipcode(self.codepostal)
 
+    @property
     def is_valid(self) -> bool:
-        return self._check_department() and self._check_siret()
+        return len(self.errors) == 0
+
+    @property
+    def errors(self):
+        errors = []
+        if not self._check_department():
+            errors.append("invalid department")
+        if not self._check_siret():
+            errors.append("invalid siret")
+        return errors
 
     @classmethod
     def without_nulls(cls, *args, **kwargs) -> 'Office':
@@ -254,7 +264,7 @@ class ExtractOfficesOperator(BaseOperator):
     def _read_offices(self) -> Generator[Office, None, None]:
         for csv_row in self._read_file():
             if self._has_extra_columns(csv_row):
-                self.log.error(f"Invalid row for siret: {csv_row['siret']}")
+                self.log.error(f"Invalid row for siret {csv_row['siret']} : has extra column")
                 continue
             office_without_null = Office.without_nulls(**csv_row)
             yield office_without_null
@@ -270,7 +280,8 @@ class ExtractOfficesOperator(BaseOperator):
 
         office: Office
         for office in self._read_offices():
-            if not office.is_valid():
+            if not office.is_valid:
+                self.log.error(f"Invalid office for siret {office.siret} : {', '.join(office.errors)}")
                 continue
             count += 1
             offices[office.siret] = office
