@@ -133,10 +133,14 @@ class TestExtractOfficesOperator(TestCase):
             replace=True,
         )
 
-    def test_rows_with_trancheffectif_to_long_should_be_skip(self):
-        nb_inserted_siret = self.execute_with_file_content(trancheeffectif='200')
+    def test_trancheffectif_should_be_transformed(self):
+        mock_mysql_hook = MagicMock(MySqlHook)
 
-        self.assertEqual(0, nb_inserted_siret)
+        nb_inserted_siret = self.execute_with_file_content(trancheeffectif='0-0', _mysql_hook=mock_mysql_hook)
+
+        self.assertEqual(1, nb_inserted_siret)
+        result = mock_mysql_hook.insert_rows.call_args[0][1][0][FIELDS.index('trancheeffectif')]
+        self.assertEqual("00", result)
 
     def test_NULL_values_are_saved_with_default(self):
         mock_mysql_hook = MagicMock(MySqlHook)

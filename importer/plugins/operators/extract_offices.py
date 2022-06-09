@@ -46,6 +46,24 @@ FIELDS = [
     "flag_pmsmp"
 ]
 
+TRANCHEEFFECTIF_MAP = {
+    "0-0": "00",
+    "1-2": "01",
+    "3-5": "02",
+    "6-9": "03",
+    "10-19": "11",
+    "20-49": "12",
+    "50-99": "21",
+    "100-199": "22",
+    "200-249": "31",
+    "250-499": "32",
+    "500-999": "41",
+    "1000-1999": "42",
+    "2000-4999": "51",
+    "5000-9999": "52",
+    "10000+": "53",
+}
+
 
 def add_quote(string: str, quote: str = '"') -> str:
     return quote + string + quote
@@ -289,8 +307,14 @@ class ExtractOfficesOperator(BaseOperator):
             if self._has_extra_columns(csv_row):
                 self.log.error(f"Invalid row for siret {csv_row['siret']} : has extra column")
                 continue
+            csv_row = self.map_fields(csv_row)
             office_without_null = Office.without_nulls(**csv_row)
             yield office_without_null
+
+    @classmethod
+    def map_fields(cls, csv_row: Dict[str, str]) -> Dict[str, str]:
+        csv_row['trancheeffectif'] = TRANCHEEFFECTIF_MAP.get(csv_row['trancheeffectif'], csv_row['trancheeffectif'])
+        return csv_row
 
     @classmethod
     def _has_extra_columns(cls, csv_entry: Dict[str, str]) -> bool:
