@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional, List, Generator, Dict, Tuple, TYPE_CHECKING, Iterable, Iterator, Any, NamedTuple
 from typing import Set
 
+from MySQLdb import DataError
 from airflow.hooks.filesystem import FSHook
 from airflow.models.baseoperator import BaseOperator
 from airflow.providers.mysql.hooks.mysql import MySqlHook
@@ -11,6 +12,7 @@ from labonneboite_common.chunk import chunks
 from labonneboite_common.departements import DEPARTEMENTS
 from labonneboite_common.siret import is_siret
 from sqlalchemy import ColumnDefault
+import sqlalchemy as sqla
 
 from models import ExportableOffice
 from utils.csv import UnquotedSemiColonDialect
@@ -87,6 +89,7 @@ class Office(NamedTuple):
             errors.append("invalid department")
         if not self._check_siret():
             errors.append("invalid siret")
+        errors.extend(self._check_fields())
         return errors
 
     @classmethod
@@ -122,6 +125,26 @@ class Office(NamedTuple):
 
     def _check_siret(self) -> bool:
         return is_siret(self.siret)
+
+    def _check_fields(self) -> Iterable[str]:
+        errors = []
+        for key, value in zip(self._fields, self):
+            column = ExportableOffice.__table__.columns[key]
+            errors.extend(self._check_field(column, value))
+        return errors
+
+    def _check_field(self, column: sqla.Column, value: Optional[str]) -> Iterable[str]:
+        if isinstance(column.type, sqla.String):
+            return self._check_string_field(column, value)
+        return []
+
+    @staticmethod
+    def _check_string_field(column: sqla.Column, value: Optional[str]) -> Iterable[str]:
+        if value is None:
+            pass
+        elif len(value) > column.type.length:
+            return [f'invalid {column.key}: data too long for column']
+        return []
 
 
 class ExtractOfficesOperator(BaseOperator):
