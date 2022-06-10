@@ -4,14 +4,13 @@ from pathlib import Path
 from typing import Optional, List, Generator, Dict, Tuple, TYPE_CHECKING, Iterable, Iterator, Any, NamedTuple
 from typing import Set
 
-from MySQLdb import DataError
+import sqlalchemy as sqla
 from airflow.hooks.filesystem import FSHook
 from airflow.models.baseoperator import BaseOperator
 from labonneboite_common.chunk import chunks
 from labonneboite_common.departements import DEPARTEMENTS
 from labonneboite_common.siret import is_siret
 from sqlalchemy import ColumnDefault
-import sqlalchemy as sqla
 
 from models import ExportableOffice
 from utils.csv import UnquotedSemiColonDialect
@@ -134,8 +133,7 @@ class Office(NamedTuple):
     @staticmethod
     def _get_column_default(default: ColumnDefault) -> Any:
         default_value = default.arg
-        if default.is_callable:
-            default_value = default.arg()
+        assert not default.is_callable
         return default_value
 
     def _check_department(self) -> bool:
@@ -210,7 +208,7 @@ class ExtractOfficesOperator(BaseOperator):
         return str(fullpath)
 
     def _get_mysql_hook(self) -> MySqlHookOnDuplicateKey:
-        if not self._mysql_hook:
+        if not self._mysql_hook:  # pragma: no cover
             self._mysql_hook = MySqlHookOnDuplicateKey(self.db_conn_id)
         return self._mysql_hook
 
@@ -263,12 +261,15 @@ class ExtractOfficesOperator(BaseOperator):
         ], FIELDS, on_duplicate_key_update=True)
 
     @staticmethod
-    def check_fields() -> bool:
+    def check_fields() -> Tuple[bool, Tuple[str, ...]]:
         """
         Unsure that all fields are in the Office
         """
-        result = all(map(Office._fields.__contains__, FIELDS))
-        return result
+        success: bool
+
+        missing_fields = tuple(field for field in FIELDS if not hasattr(Office, field))
+        success = not bool(missing_fields)
+        return success, missing_fields
 
     def _create_delete_sirets_sql_request(self, sirets: Iterable[str]) -> str:
         comma_separated_sirets = map(add_quote, sirets)

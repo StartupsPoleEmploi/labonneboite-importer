@@ -83,11 +83,6 @@ class ExtractScoresOperator(BaseOperator):
         return contextlib.closing(file)
 
     @classmethod
-    def _retrieve_rows_in_path(cls, path: Path) -> Rows:
-        with contextlib.closing(open(path)) as file:
-            return cls._retrieve_rows_in_file(file)
-
-    @classmethod
     def _retrieve_rows_in_file(cls, file) -> Rows:
         csv_reader = csv.reader(file, SemiColonDialect)
         cls._check_rows_header(csv_reader)

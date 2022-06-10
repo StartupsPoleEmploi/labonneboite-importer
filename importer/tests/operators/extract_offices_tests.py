@@ -71,6 +71,10 @@ class TestExtractOfficesOperator(TestCase):
         with patch('operators.extract_offices.open', mocked_open):
             return self.execute(offices_filename='memory', _mysql_hook=_mysql_hook)
 
+    def test_fields(self):
+        success, error = ExtractOfficesOperator.check_fields()
+        self.assertTrue(success, f'all fields should be referenced in the Office object. Missing fields: {list(error)}')
+
     def test_coherence_between_FIELDS_and_Office_props(self):
         missing_fields = set(FIELDS) - set(vars(Office))
         if missing_fields:
@@ -123,15 +127,11 @@ class TestExtractOfficesOperator(TestCase):
     def test_NULL_values_are_saved_with_null(self):
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.insert_rows = Mock()
-        with patch('operators.extract_offices.FIELDS', ['trancheeffectif']):
-            self.execute(_mysql_hook=mock_mysql_hook)
+        nb_inserted_siret = self.execute_with_file_content(trancheeffectif='NULL', _mysql_hook=mock_mysql_hook)
 
-        mock_mysql_hook.insert_rows.assert_called_with(
-            'test_table',
-            [[None], [None], [None], [None]],
-            ['trancheeffectif'],
-            on_duplicate_key_update=True,
-        )
+        self.assertEqual(1, nb_inserted_siret)
+        result = mock_mysql_hook.insert_rows.call_args[0][1][0][FIELDS.index('trancheeffectif')]
+        self.assertEqual(None, result, 'The NULL values should be insert in the DB as None')
 
     def test_trancheffectif_should_be_transformed(self):
         mock_mysql_hook = MagicMock(MySqlHook)
@@ -141,6 +141,26 @@ class TestExtractOfficesOperator(TestCase):
         self.assertEqual(1, nb_inserted_siret)
         result = mock_mysql_hook.insert_rows.call_args[0][1][0][FIELDS.index('trancheeffectif')]
         self.assertEqual("00", result, 'The "trancheeffectif" should be transform from "0-0" to "00"')
+
+    @patch('operators.extract_offices.is_siret', return_value=False)
+    def test_siret_format(self, is_siret_mock: Mock) -> None:
+        nb_invalid_inserted_siret = self.execute_with_file_content(siret='invalid siret')
+
+        is_siret_mock.assert_called_with('invalid siret')  # Siret should be check using common.is_siret method
+        self.assertEqual(0, nb_invalid_inserted_siret, "Office with invalid siret shouldn't be save")
+
+        nb_null_inserted_siret = self.execute_with_file_content(siret='NULL')
+
+        self.assertEqual(0, nb_null_inserted_siret, "Office with NULL shouldn't be save")
+
+    @patch('operators.extract_offices.get_department_from_zipcode', return_value='99')
+    @patch('operators.extract_offices.DEPARTEMENTS', new=['01'])
+    def test_department(self, get_department_from_zipcode_mock: Mock):
+        nb_inserted_siret = self.execute_with_file_content(codepostal='99999')
+
+        get_department_from_zipcode_mock.assert_called_with('99999')
+        self.assertEqual(0, nb_inserted_siret,
+                         'Office with a department not referenced in the DEPARTEMENTS shouln\'t be save')
 
     def test_row_with_invalid_trancheffectif(self):
         nb_inserted_siret = self.execute_with_file_content(trancheeffectif='0-2')
