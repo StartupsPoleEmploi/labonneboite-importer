@@ -152,9 +152,18 @@ class Office(NamedTuple):
         return errors
 
     def _check_field(self, column: sqla.Column, value: Optional[str]) -> Iterable[str]:
+        errors = []
+        errors.extend(self._check_nullable(column, value))
         if isinstance(column.type, sqla.String):
-            return self._check_string_field(column, value)
-        return []
+            errors.extend(self._check_string_field(column, value))
+        return errors
+
+    @staticmethod
+    def _check_nullable(column: sqla.Column, value: Optional) -> Iterable[str]:
+        errors = []
+        if value is None and not column.nullable:
+            errors.append(f"invalid {column.key}: column cannot be null")
+        return errors
 
     @staticmethod
     def _check_string_field(column: sqla.Column, value: Optional[str]) -> Iterable[str]:

@@ -140,7 +140,26 @@ class TestExtractOfficesOperator(TestCase):
 
         self.assertEqual(1, nb_inserted_siret)
         result = mock_mysql_hook.insert_rows.call_args[0][1][0][FIELDS.index('trancheeffectif')]
-        self.assertEqual("00", result)
+        self.assertEqual("00", result, 'The "trancheeffectif" should be transform from "0-0" to "00"')
+
+    def test_row_with_invalid_trancheffectif(self):
+        nb_inserted_siret = self.execute_with_file_content(trancheeffectif='0-2')
+
+        self.assertEqual(0, nb_inserted_siret, 'rows with invalid "trancheeffectif" should be skip')
+
+    def test_row_with_NULL_trancheffectif(self):
+        mock_mysql_hook = MagicMock(MySqlHook)
+
+        nb_inserted_siret = self.execute_with_file_content(trancheeffectif='NULL', _mysql_hook=mock_mysql_hook)
+
+        self.assertEqual(1, nb_inserted_siret, 'rows with NULL "trancheeffectif" should be add')
+        result = mock_mysql_hook.insert_rows.call_args[0][1][0][FIELDS.index('trancheeffectif')]
+        self.assertIsNone(result, 'The "trancheeffectif" should be add as "None"')
+
+    def test_row_with_null_raisonsociale_should_be_skip(self):
+        nb_inserted_siret = self.execute_with_file_content(raisonsociale='NULL')
+
+        self.assertEqual(0, nb_inserted_siret, 'rows with NULL in the "raisonsocial" shouldn\'t be treated')
 
     def test_NULL_values_are_saved_with_default(self):
         mock_mysql_hook = MagicMock(MySqlHook)
