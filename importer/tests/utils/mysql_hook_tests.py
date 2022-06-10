@@ -135,7 +135,6 @@ class MySqlHookOnDuplicateKeyTestInsertRows(TestCase):
         hook.insert_rows('table_name', [['012345678', '1']], ['col1', 'col2'])
         self.assertIn("(%(col1)s,%(col2)s)", hook.last_result)
 
-
     def test_without_on_duplicate_key_update_arg_expect_result_to_not_have_ON_DUPLICATE_KEY_UPDATE(self):
         hook = MySqlHookOnDuplicateKeyWithoutConnexions()
         hook.insert_rows('table_name', [['012345678', '1']], ['siret', 'score'], on_duplicate_key_update=False)

@@ -1,9 +1,8 @@
 from typing import Any
 
 from labonneboite_common.models.office_mixin import FinalOfficeMixin
-from sqlalchemy import PrimaryKeyConstraint, Index, Column, String, Float
+from sqlalchemy import PrimaryKeyConstraint, Index
 from sqlalchemy.ext.declarative import declarative_base
-
 
 Base = declarative_base()  # type: Any
 
@@ -33,7 +32,6 @@ class ExportableOffice(FinalOfficeMixin, Base):
         # by quickly locating offices having a given scam email.
         Index('_email', 'email'),
     )
-
 
 # class Geolocation(Base):
 #     """

@@ -105,16 +105,17 @@ class ExtractScoresOperatorFileSystemTestCase(TestCase):
         self.assertTrue(result_file_path.startswith('/test/'))
 
     def test_execute_without_enough_header_should_fail(self):
-        with self.assertRaisesRegex(AssertionError, 'Scores csv should have at least \d+ columns?'):
+        with self.assertRaisesRegex(AssertionError, r'Scores csv should have at least \d+ columns?'):
             self.execute(header="siret")
 
     def test_execute_without_siret_should_fail(self):
-        with self.assertRaisesRegex(AssertionError, "Scores csv first row should be the siret \(actually: 'header1'\)"):
+        with self.assertRaisesRegex(AssertionError,
+                                    r"Scores csv first row should be the siret \(actually: 'header1'\)"):
             self.execute(header="header1;predictions")
 
     def test_execute_without_predictions_should_fail(self):
         with self.assertRaisesRegex(AssertionError,
-                                    "Scores csv second row should be the predictions \(actually: 'header2'\)"):
+                                    r"Scores csv second row should be the predictions \(actually: 'header2'\)"):
             self.execute(header="siret;header2")
 
     def test_execute_should_save_the_csv_content(self):
