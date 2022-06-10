@@ -1,14 +1,19 @@
+import os.path
 from os.path import dirname, join
 from typing import Optional
-from unittest import TestCase
-from unittest.mock import Mock, MagicMock, patch, call
+from unittest import TestCase, skipUnless
+from unittest.mock import Mock, MagicMock, patch, call, mock_open
 
+import _csv
 from airflow.hooks.filesystem import FSHook
 from airflow.providers.mysql.hooks.mysql import MySqlHook
 
 from operators.extract_offices import ExtractOfficesOperator, Office, FIELDS
 
 TEST_DIR = join(dirname(dirname(dirname(__file__))), 'tests')
+
+VALID_HEADER = 'siret;raisonsociale;enseigne;codenaf;numerorue;libellerue;codecommune;codepostal;email;tel;' \
+               'trancheeffectif;website;flag_poe_afpr;flag_pmsmp;flag_junior;flag_senior;flag_handicap'
 
 
 def create_office(**overloaded_kwargs):
@@ -42,16 +47,29 @@ class TestExtractOfficesOperator(TestCase):
     office_filename = join(TEST_DIR, 'data', 'lbb-output-wf-202202150303-extracted',
                            'etablissements', 'etablissements.csv')
 
-    def execute(self, _mysql_hook: Optional[MySqlHook] = None):
+    def execute(self, _mysql_hook: Optional[MySqlHook] = None, offices_filename: Optional[str] = None):
         mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
         mock_mysql_hook = _mysql_hook or MagicMock(MySqlHook)
-        operator = ExtractOfficesOperator(offices_filename=self.office_filename,
+        offices_filename = offices_filename or self.office_filename
+        operator = ExtractOfficesOperator(offices_filename=offices_filename,
                                           destination_table='test_table',
                                           task_id="test_task",
                                           chunk_size=5,
                                           _fs_hook=mock_fs_hook,
                                           _mysql_hook=mock_mysql_hook)
-        operator.execute({})
+        return operator.execute({})
+
+    def execute_with_file_content(self, _mysql_hook: Optional[MySqlHook] = None, header=VALID_HEADER,
+                                  **overloaded_values: str):
+        file_content = create_office(**overloaded_values)
+        csv_fields = [file_content.siret, file_content.raisonsociale, file_content.enseigne, file_content.codenaf,
+                      file_content.numerorue, file_content.libellerue, file_content.codecommune,
+                      file_content.codepostal, file_content.email, file_content.tel, file_content.trancheeffectif,
+                      file_content.website, file_content.flag_poe_afpr, file_content.flag_pmsmp,
+                      file_content.flag_junior, file_content.flag_senior, file_content.flag_handicap]
+        mocked_open = mock_open(read_data=f"{header}\n{';'.join(csv_fields)}\n")
+        with patch('operators.extract_offices.open', mocked_open):
+            return self.execute(offices_filename='memory', _mysql_hook=_mysql_hook)
 
     def test_coherence_between_FIELDS_and_Office_props(self):
         missing_fields = set(FIELDS) - set(vars(Office))
@@ -154,8 +172,35 @@ class TestExtractOfficesOperator(TestCase):
 
     def test_execute_don_t_delete_invalid_sirets(self):
         mock_mysql_hook = MagicMock(MySqlHook)
-        mock_mysql_hook.get_records = Mock(return_value=[("invalid",)])
+        mock_mysql_hook.get_records = Mock(return_value=[("invalids",)])
         mock_mysql_hook.run = Mock()
         self.execute(_mysql_hook=mock_mysql_hook)
 
         mock_mysql_hook.run.assert_not_called()
+
+    def test_file_with_extra_column_should_skip_it(self):
+        raisonsociale_with_semicolon = "SQUARE GEORGES; GUYON"
+        insert_rows_mock = MagicMock(MySqlHook)
+
+        nb_inserted_sirets = self.execute_with_file_content(_mysql_hook=insert_rows_mock,
+                                                            raisonsociale=raisonsociale_with_semicolon)
+
+        self.assertEqual(0, nb_inserted_sirets)
+
+    def test_quotes_should_be_treated(self):
+        insert_rows_mock = Mock()
+        mock_mysql_hook = MagicMock(MySqlHook, insert_rows=insert_rows_mock)
+
+        nb_inserted_sirets = self.execute_with_file_content(raisonsociale='"quoted name', _mysql_hook=mock_mysql_hook)
+
+        self.assertEqual(1, nb_inserted_sirets)
+        insert_rows__args = insert_rows_mock.call_args[0]
+        insert_rows__rows = insert_rows__args[1]
+        self.assertIn('"quoted name', insert_rows__rows[0], 'the raison social should have the quote')
+
+    @skipUnless(os.path.exists(join(TEST_DIR, 'data', 'huge_test.csv')), 'huge_test doesn\'t exists')
+    def test_file_with_huge_file(self):
+        try:
+            self.execute(offices_filename=join(TEST_DIR, 'data', 'huge_test.csv'))
+        except _csv.Error:
+            self.fail("Huge file should succeed")

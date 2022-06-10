@@ -13,7 +13,7 @@ from labonneboite_common.siret import is_siret
 from sqlalchemy import ColumnDefault
 
 from models import ExportableOffice
-from utils.csv import SemiColonDialect
+from utils.csv import UnquotedSemiColonDialect
 from utils.get_departement_from_zipcode import get_department_from_zipcode
 
 if TYPE_CHECKING:
@@ -76,8 +76,18 @@ class Office(NamedTuple):
     def departement(self) -> Optional[str]:
         return get_department_from_zipcode(self.codepostal)
 
+    @property
     def is_valid(self) -> bool:
-        return self._check_department() and self._check_siret()
+        return len(self.errors) == 0
+
+    @property
+    def errors(self):
+        errors = []
+        if not self._check_department():
+            errors.append("invalid department")
+        if not self._check_siret():
+            errors.append("invalid siret")
+        return errors
 
     @classmethod
     def without_nulls(cls, *args, **kwargs) -> 'Office':
@@ -116,6 +126,7 @@ class Office(NamedTuple):
 
 class ExtractOfficesOperator(BaseOperator):
     template_fields = ["offices_filename"]
+    REST_KEY = None
 
     def __init__(self,
                  *args: Any,
@@ -226,20 +237,41 @@ class ExtractOfficesOperator(BaseOperator):
     def _check_header(header: Dict[str, str]) -> None:
         keys = list(header.keys())
         values = list(header.values())
-        assert keys == values, f"{keys} != {values} (^{set(keys) ^ set(values)})"
+        assert keys == values, f"{keys} != {values} (^{set(map(str, keys)) ^ set(map(str, values))})"
+
+    def _get_dict_reader(self, my_file: Iterable[str]) -> Iterable[Dict[str, str]]:
+        reader: Iterable[Dict[str, str]]
+
+        reader = csv.DictReader(
+            my_file,
+            Office._fields,
+            restkey=self.__class__.REST_KEY,
+            dialect=UnquotedSemiColonDialect
+        )
+
+        return reader
 
     def _read_file(self) -> Generator[Dict[str, str], None, None]:
+        iterator: Iterator[Dict[str, str]]
+        reader: Iterable[Dict[str, str]]
 
         with open(self._get_fullpath()) as my_file:
-            reader: Iterable[Dict[str, str]] = csv.DictReader(my_file, Office._fields, dialect=SemiColonDialect)
-            iterator: Iterator[Dict[str, str]] = iter(reader)
+            reader = self._get_dict_reader(my_file)
+            iterator = iter(reader)
             self._check_header(header=next(iterator))
             yield from iterator
 
     def _read_offices(self) -> Generator[Office, None, None]:
-        for csv_entry in self._read_file():
-            office_without_null = Office.without_nulls(**csv_entry)
+        for csv_row in self._read_file():
+            if self._has_extra_columns(csv_row):
+                self.log.error(f"Invalid row for siret {csv_row['siret']} : has extra column")
+                continue
+            office_without_null = Office.without_nulls(**csv_row)
             yield office_without_null
+
+    @classmethod
+    def _has_extra_columns(cls, csv_entry: Dict[str, str]) -> bool:
+        return cls.REST_KEY in csv_entry
 
     def _get_offices_from_file(self) -> Generator[Dict[str, Office], None, None]:
         self.log.info("extracting %s...", self._get_fullpath())
@@ -248,7 +280,8 @@ class ExtractOfficesOperator(BaseOperator):
 
         office: Office
         for office in self._read_offices():
-            if not office.is_valid():
+            if not office.is_valid:
+                self.log.error(f"Invalid office for siret {office.siret} : {', '.join(office.errors)}")
                 continue
             count += 1
             offices[office.siret] = office
