@@ -65,7 +65,7 @@ migrate:
 test: test-init test-run  ## Init and run tests
 
 test-run:  ## Run tests
-	${AIRFLOW_TEST_ENV} pytest --import-mode importlib ${TEST_ARGS} ${TEST_FILES}
+	${AIRFLOW_TEST_ENV} ${VIRTUAL_ENV}/bin/pytest --import-mode importlib ${TEST_ARGS} ${TEST_FILES}
 
 test-init: init-venv test-init-db test-init-variables  ## Init tests
 

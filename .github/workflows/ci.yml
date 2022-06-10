@@ -1,0 +1,35 @@
+name: test
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9.11"
+
+      - name: Cache pip
+        id: cache-pip
+        uses: actions/cache@v3.0.4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Get virtual env directory
+        id: venv
+        run: |
+          echo "::set-output name=dir::$(dirname $(dirname  $(which pip)))"
+
+      - name: Install dependencies
+        if: steps.cache-pip.outputs.cache-hit != 'true'
+        run: |
+          make test-init PYTHON_INSTALLED_VERSION_FILE=.python-version VIRTUAL_ENV="${{ steps.venv.outputs.dir }}"
+
+      - name: Test
+        run: make test-run VIRTUAL_ENV="${{ steps.venv.outputs.dir }}"
