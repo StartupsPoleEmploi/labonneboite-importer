@@ -29,7 +29,6 @@ class TestUntarOperator(TestCase):
             self.assertTrue(os.path.exists(os.path.join(dest_path, 'inference', 'predictions', 'predictions.csv')))
 
     def test_dir_inexistant_directory(self):
-
         with tempfile.TemporaryDirectory() as tempdir:
             dest_path = os.path.join(tempdir, 'subdir')
             MockFSHook = MagicMock(FSHook, get_path=Mock(return_value="/"))
