@@ -138,8 +138,8 @@ class TestExtractOfficesOperator(TestCase):
             'SELECT siret FROM test_table'
         )
         mock_mysql_hook.run.assert_called_once()
-        expected_query_1 = 'DELETE FROM "test_table" WHERE "siret" IN ("51837000000001", "51837000000002")'
-        expected_query_2 = 'DELETE FROM "test_table" WHERE "siret" IN ("51837000000002", "51837000000001")'
+        expected_query_1 = 'DELETE FROM `test_table` WHERE `siret` IN ("51837000000001", "51837000000002")'
+        expected_query_2 = 'DELETE FROM `test_table` WHERE `siret` IN ("51837000000002", "51837000000001")'
         if (mock_mysql_hook.run.call_args != call([expected_query_1]) and mock_mysql_hook.run.call_args != call(
                 [expected_query_2])):
             self.fail(f"Extra companies should be delete, got :\n{mock_mysql_hook.run.call_args}")

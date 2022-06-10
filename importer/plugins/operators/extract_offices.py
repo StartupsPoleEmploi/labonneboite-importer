@@ -212,7 +212,7 @@ class ExtractOfficesOperator(BaseOperator):
     def _create_delete_sirets_sql_request(self, sirets: Iterable[str]) -> str:
         comma_separated_sirets = map(add_quote, sirets)
         stringified_sirets = ', '.join(comma_separated_sirets)
-        return f'DELETE FROM "{self.destination_table}" WHERE "siret" IN ({stringified_sirets})'
+        return f'DELETE FROM `{self.destination_table}` WHERE `siret` IN ({stringified_sirets})'
 
     def _delete_deletable_offices(self, deletable_sirets: Set[str]) -> None:
         if deletable_sirets:
