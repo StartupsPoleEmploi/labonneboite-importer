@@ -9,6 +9,9 @@ class GetDepartmentFromZipcodeTestCase(unittest.TestCase):
         department = get_department_from_zipcode("6600")
         self.assertEqual(department, "06")
 
+        department = get_department_from_zipcode(None)
+        self.assertEqual(department, None)
+
 
 if __name__ == '__main__':
     unittest.main()
