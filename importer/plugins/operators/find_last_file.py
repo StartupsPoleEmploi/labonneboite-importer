@@ -43,8 +43,8 @@ class FindLastFileOperator(BaseOperator):
             file_modification_dt = DateTime.fromtimestamp(  # type: ignore [no-untyped-call]
                 file_modification_ts, tz=UTC
             )
+            print(f"Found {path} modifed on {file_modification_dt}")
             if time_intervale[0] <= file_modification_dt < time_intervale[1]:
-                print(f"Found {path} modifed on {file_modification_dt}")
                 yield path, file_modification_dt
 
     def get_time_interval(self, context: Context) -> TimeIntervale:
