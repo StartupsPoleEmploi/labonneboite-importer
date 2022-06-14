@@ -1,10 +1,8 @@
-from typing import Any
-
 from labonneboite_common.models.office_mixin import FinalOfficeMixin
 from sqlalchemy import PrimaryKeyConstraint, Index
 from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()  # type: Any
+Base = declarative_base()
 
 
 class ExportableOffice(FinalOfficeMixin, Base):

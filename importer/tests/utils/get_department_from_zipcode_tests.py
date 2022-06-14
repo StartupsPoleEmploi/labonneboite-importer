@@ -5,7 +5,7 @@ from utils.get_departement_from_zipcode import get_department_from_zipcode
 
 class GetDepartmentFromZipcodeTestCase(unittest.TestCase):
 
-    def test_get_department_from_zipcode(self):
+    def test_get_department_from_zipcode(self) -> None:
         department = get_department_from_zipcode("")
         self.assertEqual(department, None, "Empty zipcode should return None")
 

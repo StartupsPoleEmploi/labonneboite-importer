@@ -1,7 +1,7 @@
 import csv
 import itertools
 from pathlib import Path
-from typing import Optional, List, Generator, Dict, Tuple, TYPE_CHECKING, Iterable, Iterator, Any, NamedTuple
+from typing import Optional, List, Generator, Dict, Tuple, Iterable, Iterator, Any, NamedTuple, Collection, Text
 from typing import Set
 
 import sqlalchemy as sqla
@@ -12,13 +12,11 @@ from labonneboite_common.departements import DEPARTEMENTS
 from labonneboite_common.siret import is_siret
 from sqlalchemy import ColumnDefault
 
+from common.types import Context
 from models import ExportableOffice
 from utils.csv import UnquotedSemiColonDialect
 from utils.get_departement_from_zipcode import get_department_from_zipcode
 from utils.mysql_hook import MySqlHookOnDuplicateKey
-
-if TYPE_CHECKING:
-    from common.types import Context
 
 # This list contains siret that must not be found in data,
 # we use it as a test : if one of those is found in data, we stop the importer
@@ -68,8 +66,8 @@ def add_quote(string: str, quote: str = '"') -> str:
     return quote + string + quote
 
 
-def is_null(string: str) -> bool:
-    return string == 'NULL'
+def is_null(string: Optional[str]) -> bool:
+    return string is None or string == 'NULL'
 
 
 class Office(NamedTuple):
@@ -100,7 +98,7 @@ class Office(NamedTuple):
         return len(self.errors) == 0
 
     @property
-    def errors(self):
+    def errors(self) -> Collection[str]:
         errors = []
         if not self._check_department():
             errors.append("invalid department")
@@ -110,21 +108,23 @@ class Office(NamedTuple):
         return errors
 
     @classmethod
-    def without_nulls(cls, *args, **kwargs) -> 'Office':
-        self = cls(*args, **kwargs)
-        new_args: List[Any] = []
+    def without_nulls(cls, siret: str, **kwargs: str) -> 'Office':
+        self = cls(siret, **kwargs)
+        new_args: List[Optional[str]] = []
         for key, value in zip(cls._fields, self):
-            new_args.append(cls._get_default_for_null_value(key, value))
-        return cls(*new_args)
+            if key != 'siret':
+                new_args.append(cls._get_default_for_null_value(key, value))
+        return cls(siret, *new_args)
 
     @classmethod
-    def _get_default_for_null_value(cls, key, value) -> Optional[Any]:
+    def _get_default_for_null_value(cls, key: str, value: Optional[str]) -> Optional[Any]:
         if is_null(value):
             return cls._get_default_or_none(key)
         return value
 
     @classmethod
-    def _get_default_or_none(cls, key) -> Optional[Any]:
+    def _get_default_or_none(cls, key: str) -> Optional[Any]:
+        assert key in ExportableOffice.__table__.columns
         default: Optional[ColumnDefault] = ExportableOffice.__table__.columns[key].default
         if default:
             return cls._get_column_default(default)
@@ -142,32 +142,33 @@ class Office(NamedTuple):
     def _check_siret(self) -> bool:
         return is_siret(self.siret)
 
-    def _check_fields(self) -> Iterable[str]:
-        errors = []
+    def _check_fields(self) -> Collection[str]:
+        errors: List[str] = []
         for key, value in zip(self._fields, self):
             column = ExportableOffice.__table__.columns[key]
             errors.extend(self._check_field(column, value))
         return errors
 
-    def _check_field(self, column: sqla.Column, value: Optional[str]) -> Iterable[str]:
-        errors = []
+    def _check_field(self, column: 'sqla.Column[Any]', value: Optional[str]) -> Collection[str]:
+        errors: List[str] = []
         errors.extend(self._check_nullable(column, value))
         if isinstance(column.type, sqla.String):
-            errors.extend(self._check_string_field(column, value))
+            errors.extend(self._check_string_field(column, column.type, value))
         return errors
 
     @staticmethod
-    def _check_nullable(column: sqla.Column, value: Optional) -> Iterable[str]:
+    def _check_nullable(column: 'sqla.Column[Any]', value: Optional[Any]) -> Collection[str]:
         errors = []
         if value is None and not column.nullable:
             errors.append(f"invalid {column.key}: column cannot be null")
         return errors
 
     @staticmethod
-    def _check_string_field(column: sqla.Column, value: Optional[str]) -> Iterable[str]:
+    def _check_string_field(
+            column: 'sqla.Column[Text]', column_type: sqla.String, value: Optional[str]) -> Collection[str]:
         if value is None:
             pass
-        elif len(value) > column.type.length:
+        elif column_type.length is not None and len(value) > column_type.length:
             return [f'invalid {column.key}: data too long for column']
         return []
 
@@ -226,7 +227,7 @@ class ExtractOfficesOperator(BaseOperator):
             for siret in itertools.islice(existing_set, 20):
                 self.log.info(f" siret : {siret}")
 
-    def execute(self, context: 'Context') -> int:
+    def execute(self, context: Context) -> int:
         existing_set = set(self._get_sirets_from_database())
         sirets_inserted: Set[str] = set()
 

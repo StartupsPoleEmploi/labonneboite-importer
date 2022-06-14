@@ -4,8 +4,6 @@
 #
 #    pip-compile --output-file=requirements.dev.txt requirements.dev.in
 #
--e git+https://github.com/StartupsPoleEmploi/labonneboite-common.git@8a1d829645e066e374a27807c2da44b77e0ce76f#egg=labonneboite-common
-    # via -r requirements.txt
 alembic==1.7.7
     # via
     #   -r requirements.txt
@@ -299,6 +297,8 @@ kombu==5.2.4
     # via
     #   -r requirements.txt
     #   celery
+labonneboite-common @ git+https://github.com/StartupsPoleEmploi/labonneboite-common.git@8a1d829645e066e374a27807c2da44b77e0ce76f
+    # via -r requirements.txt
 lazy-object-proxy==1.7.1
     # via
     #   -r requirements.txt
@@ -345,7 +345,9 @@ marshmallow-sqlalchemy==0.26.1
 mccabe==0.6.1
     # via flake8
 mypy==0.941
-    # via -r requirements.dev.in
+    # via
+    #   -r requirements.dev.in
+    #   sqlalchemy-stubs
 mypy-extensions==0.4.3
     # via mypy
 mysql-connector-python==8.0.28
@@ -513,6 +515,8 @@ sqlalchemy-jsonfield==1.0.0
     # via
     #   -r requirements.txt
     #   apache-airflow
+sqlalchemy-stubs==0.4
+    # via -r requirements.dev.in
 sqlalchemy-utils==0.38.2
     # via
     #   -r requirements.txt
@@ -542,7 +546,9 @@ tomli==2.0.1
     #   mypy
     #   pytest
 typing-extensions==4.1.1
-    # via mypy
+    # via
+    #   mypy
+    #   sqlalchemy-stubs
 unicodecsv==0.14.1
     # via
     #   -r requirements.txt
