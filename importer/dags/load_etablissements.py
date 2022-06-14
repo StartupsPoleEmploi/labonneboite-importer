@@ -20,7 +20,7 @@ default_args = {
     "retry_delay": datetime.timedelta(hours=5),
 }
 
-fs_hook_path = Path('{{ conn.fs_default.path }}')
+fs_hook_path = Path('/{{ conn.fs_default.schema }}')
 data_path = fs_hook_path / Variable.get('data_path', default_var='/var/input')
 output_path = fs_hook_path / Variable.get('work_path', default_var='/var/output')
 filepath = data_path / Variable.get('etab_file_glob')
@@ -40,7 +40,7 @@ with DAG("load-etablissements-2022-04",
             mkdir -p "${DIR}" && \
             test -d "${DIR}"
         """,
-        env={"DIR": str(working_tmp_dir), "TEST": "{{ conn.fs_default.path }}"})
+        env={"DIR": str(working_tmp_dir)})
 
     with TaskGroup("untar") as untar_group:
         find_last_file = FindLastFileOperator(
