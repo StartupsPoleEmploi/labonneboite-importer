@@ -16,23 +16,28 @@ jobs:
         id: cache-pip
         uses: actions/cache@v3.0.4
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          path: ${{ env.pythonLocation }}/*
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
-      - name: Get virtual env directory
-        id: venv
-        run: |
-          echo "::set-output name=dir::$(dirname $(dirname  $(which pip)))"
+            ${{ runner.os }}-
 
       - name: Install dependencies
         if: steps.cache-pip.outputs.cache-hit != 'true'
-        run: |
-          make test-init PYTHON_INSTALLED_VERSION_FILE=.python-version VIRTUAL_ENV="${{ steps.venv.outputs.dir }}"
+        run: make install-dev-requirements
+        env:
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
+
+      - name: Init test data
+        run: make test-init-db test-init-variables
+        env:
+          PYTHON_INSTALLED_VERSION_FILE: .python-version
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
 
       - name: Test
-        run: make test-run VIRTUAL_ENV="${{ steps.venv.outputs.dir }}"
+        run: make test-run
+        env:
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
 
   ci:
     runs-on: ubuntu-20.04
@@ -49,25 +54,19 @@ jobs:
         id: cache-pip
         uses: actions/cache@v3.0.4
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          path: ${{ env.pythonLocation }}/*
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
-      - name: Get virtual env directory
-        id: venv
-        run: |
-          echo "::set-output name=dir::$(dirname $(dirname  $(which pip)))"
-
-      - name: test
-        run: echo "${VIRTUAL_ENV}"
-        env:
-          VIRTUAL_ENV: ${{ steps.venv.outputs.dir }}
+            ${{ runner.os }}-
 
       - name: Install dependencies
         if: steps.cache-pip.outputs.cache-hit != 'true'
-        run: |
-          make install-dev-requirements VIRTUAL_ENV="${{ steps.venv.outputs.dir }}"
+        run: make install-dev-requirements
+        env:
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
 
       - name: Test
-        run: make lint VIRTUAL_ENV="${{ steps.venv.outputs.dir }}"
+        run: make lint
+        env:
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
