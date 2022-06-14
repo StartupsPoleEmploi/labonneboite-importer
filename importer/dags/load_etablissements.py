@@ -109,4 +109,4 @@ untar_group >> offices_group >> join
 untar_group >> scores_group >> join
 untar_group >> retrieve_geoloc_task >> join
 
-# join >> rmdir >> end_task
+join >> rmdir >> end_task
