@@ -1,6 +1,6 @@
 import os.path
 from os.path import dirname, join
-from typing import Optional
+from typing import Dict, Optional, Any
 from unittest import TestCase, skipUnless
 from unittest.mock import Mock, MagicMock, patch, call, mock_open
 
@@ -8,6 +8,7 @@ import _csv
 from airflow.hooks.filesystem import FSHook
 from airflow.providers.mysql.hooks.mysql import MySqlHook
 
+from common.types import Context
 from operators.extract_offices import ExtractOfficesOperator, Office, FIELDS
 
 TEST_DIR = join(dirname(dirname(dirname(__file__))), 'tests')
@@ -16,17 +17,20 @@ VALID_HEADER = 'siret;raisonsociale;enseigne;codenaf;numerorue;libellerue;codeco
                'trancheeffectif;website;flag_poe_afpr;flag_pmsmp;flag_junior;flag_senior;flag_handicap'
 
 
-def create_office(**overloaded_kwargs):
-    kwargs = dict(siret='00000000001941', raisonsociale='ASS MUSARAILE', enseigne='', codenaf='9312Z',
+def create_office(siret: str = '00000000001941', **overloaded_kwargs: Any) -> Office:
+    kwargs: Dict[str, Any]
+
+    kwargs = dict(raisonsociale='ASS MUSARAILE', enseigne='', codenaf='9312Z',
                   numerorue='5', libellerue='SQUARE GEORGES GUYON', codecommune='94046',
                   codepostal='94700', email='', tel='0143565222', trancheeffectif='NULL', website='',
                   flag_poe_afpr='0', flag_pmsmp='0', flag_junior='NULL', flag_senior='NULL',
                   flag_handicap='NULL')
     kwargs.update(**overloaded_kwargs)
-    return Office(**kwargs)
+
+    return Office(siret=siret, **kwargs)
 
 
-def create_office_with_default():
+def create_office_with_default() -> Office:
     return create_office(
         trancheeffectif=None,
         flag_junior=False,
@@ -38,7 +42,7 @@ def create_office_with_default():
 class OfficeTestCase(TestCase):
 
     @patch('operators.extract_offices.get_department_from_zipcode', return_value="OK")
-    def test_department(self, _: Mock):
+    def test_department(self, _: Mock) -> None:
         office = create_office()
         self.assertEqual(office.departement, "OK")
 
@@ -47,7 +51,7 @@ class TestExtractOfficesOperator(TestCase):
     office_filename = join(TEST_DIR, 'data', 'lbb-output-wf-202202150303-extracted',
                            'etablissements', 'etablissements.csv')
 
-    def execute(self, _mysql_hook: Optional[MySqlHook] = None, offices_filename: Optional[str] = None):
+    def execute(self, _mysql_hook: Optional[MySqlHook] = None, offices_filename: Optional[str] = None) -> int:
         mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
         mock_mysql_hook = _mysql_hook or MagicMock(MySqlHook)
         offices_filename = offices_filename or self.office_filename
@@ -57,27 +61,33 @@ class TestExtractOfficesOperator(TestCase):
                                           chunk_size=5,
                                           _fs_hook=mock_fs_hook,
                                           _mysql_hook=mock_mysql_hook)
-        return operator.execute({})
+        return operator.execute(Context())
 
-    def execute_with_file_content(self, _mysql_hook: Optional[MySqlHook] = None, header=VALID_HEADER,
-                                  **overloaded_values: str):
+    def execute_with_file_content(self, _mysql_hook: Optional[MySqlHook] = None, header: str = VALID_HEADER,
+                                  **overloaded_values: str) -> int:
         file_content = create_office(**overloaded_values)
-        csv_fields = [file_content.siret, file_content.raisonsociale, file_content.enseigne, file_content.codenaf,
-                      file_content.numerorue, file_content.libellerue, file_content.codecommune,
-                      file_content.codepostal, file_content.email, file_content.tel, file_content.trancheeffectif,
-                      file_content.website, file_content.flag_poe_afpr, file_content.flag_pmsmp,
-                      file_content.flag_junior, file_content.flag_senior, file_content.flag_handicap]
+        csv_fields = map(str,
+                         [file_content.siret, file_content.raisonsociale, file_content.enseigne, file_content.codenaf,
+                          file_content.numerorue, file_content.libellerue, file_content.codecommune,
+                          file_content.codepostal, file_content.email, file_content.tel, file_content.trancheeffectif,
+                          file_content.website, file_content.flag_poe_afpr, file_content.flag_pmsmp,
+                          file_content.flag_junior, file_content.flag_senior, file_content.flag_handicap])
+
         mocked_open = mock_open(read_data=f"{header}\n{';'.join(csv_fields)}\n")
         with patch('operators.extract_offices.open', mocked_open):
             return self.execute(offices_filename='memory', _mysql_hook=_mysql_hook)
 
-    def test_coherence_between_FIELDS_and_Office_props(self):
+    def test_fields(self) -> None:
+        success, error = ExtractOfficesOperator.check_fields()
+        self.assertTrue(success, f'all fields should be referenced in the Office object. Missing fields: {list(error)}')
+
+    def test_coherence_between_FIELDS_and_Office_props(self) -> None:
         missing_fields = set(FIELDS) - set(vars(Office))
         if missing_fields:
             message = f"All fields in ExtractOfficesOperator should be in the Office props. Missing : {missing_fields}"
             self.fail(message)
 
-    def test_get_offices_from_file(self):
+    def test_get_offices_from_file(self) -> None:
         mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
         operator = ExtractOfficesOperator(offices_filename=self.office_filename,
                                           destination_table='test_table',
@@ -94,7 +104,7 @@ class TestExtractOfficesOperator(TestCase):
         self.maxDiff = None
         self.assertEqual(result["00000000001941"], expected_result)
 
-    def test_get_offices_from_file_with_chunk(self):
+    def test_get_offices_from_file_with_chunk(self) -> None:
         mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
         operator = ExtractOfficesOperator(offices_filename=self.office_filename,
                                           destination_table='test_table',
@@ -106,7 +116,7 @@ class TestExtractOfficesOperator(TestCase):
         self.assertEqual(5, len(result[0]))
         self.assertEqual(4, len(result[1]))
 
-    def test_execute_create_companies(self):
+    def test_execute_create_companies(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.insert_rows = Mock()
         with patch('operators.extract_offices.FIELDS', ['siret']):
@@ -117,23 +127,19 @@ class TestExtractOfficesOperator(TestCase):
             'test_table',
             [["00000488794926"], ["00000533026381"], ["00000599101508"], ["00000815184353"]],
             ['siret'],
-            replace=True,
+            on_duplicate_key_update=True,
         )
 
-    def test_NULL_values_are_saved_with_null(self):
+    def test_NULL_values_are_saved_with_null(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.insert_rows = Mock()
-        with patch('operators.extract_offices.FIELDS', ['trancheeffectif']):
-            self.execute(_mysql_hook=mock_mysql_hook)
+        nb_inserted_siret = self.execute_with_file_content(trancheeffectif='NULL', _mysql_hook=mock_mysql_hook)
 
-        mock_mysql_hook.insert_rows.assert_called_with(
-            'test_table',
-            [[None], [None], [None], [None]],
-            ['trancheeffectif'],
-            replace=True,
-        )
+        self.assertEqual(1, nb_inserted_siret)
+        result = mock_mysql_hook.insert_rows.call_args[0][1][0][FIELDS.index('trancheeffectif')]
+        self.assertEqual(None, result, 'The NULL values should be insert in the DB as None')
 
-    def test_trancheffectif_should_be_transformed(self):
+    def test_trancheffectif_should_be_transformed(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
 
         nb_inserted_siret = self.execute_with_file_content(trancheeffectif='0-0', _mysql_hook=mock_mysql_hook)
@@ -142,12 +148,32 @@ class TestExtractOfficesOperator(TestCase):
         result = mock_mysql_hook.insert_rows.call_args[0][1][0][FIELDS.index('trancheeffectif')]
         self.assertEqual("00", result, 'The "trancheeffectif" should be transform from "0-0" to "00"')
 
-    def test_row_with_invalid_trancheffectif(self):
+    @patch('operators.extract_offices.is_siret', return_value=False)
+    def test_siret_format(self, is_siret_mock: Mock) -> None:
+        nb_invalid_inserted_siret = self.execute_with_file_content(siret='invalid siret')
+
+        is_siret_mock.assert_called_with('invalid siret')  # Siret should be check using common.is_siret method
+        self.assertEqual(0, nb_invalid_inserted_siret, "Office with invalid siret shouldn't be save")
+
+        nb_null_inserted_siret = self.execute_with_file_content(siret='NULL')
+
+        self.assertEqual(0, nb_null_inserted_siret, "Office with NULL shouldn't be save")
+
+    @patch('operators.extract_offices.get_department_from_zipcode', return_value='99')
+    @patch('operators.extract_offices.DEPARTEMENTS', new=['01'])
+    def test_department(self, get_department_from_zipcode_mock: Mock) -> None:
+        nb_inserted_siret = self.execute_with_file_content(codepostal='99999')
+
+        get_department_from_zipcode_mock.assert_called_with('99999')
+        self.assertEqual(0, nb_inserted_siret,
+                         "Office with a department not referenced in the DEPARTEMENTS shouldn't be save")
+
+    def test_row_with_invalid_trancheffectif(self) -> None:
         nb_inserted_siret = self.execute_with_file_content(trancheeffectif='0-2')
 
         self.assertEqual(0, nb_inserted_siret, 'rows with invalid "trancheeffectif" should be skip')
 
-    def test_row_with_NULL_trancheffectif(self):
+    def test_row_with_NULL_trancheffectif(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
 
         nb_inserted_siret = self.execute_with_file_content(trancheeffectif='NULL', _mysql_hook=mock_mysql_hook)
@@ -156,12 +182,12 @@ class TestExtractOfficesOperator(TestCase):
         result = mock_mysql_hook.insert_rows.call_args[0][1][0][FIELDS.index('trancheeffectif')]
         self.assertIsNone(result, 'The "trancheeffectif" should be add as "None"')
 
-    def test_row_with_null_raisonsociale_should_be_skip(self):
+    def test_row_with_null_raisonsociale_should_be_skip(self) -> None:
         nb_inserted_siret = self.execute_with_file_content(raisonsociale='NULL')
 
         self.assertEqual(0, nb_inserted_siret, 'rows with NULL in the "raisonsocial" shouldn\'t be treated')
 
-    def test_NULL_values_are_saved_with_default(self):
+    def test_NULL_values_are_saved_with_default(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.insert_rows = Mock()
         with patch('operators.extract_offices.FIELDS', ['flag_junior']):
@@ -171,10 +197,10 @@ class TestExtractOfficesOperator(TestCase):
             'test_table',
             [[False], [False], [False], [False]],
             ['flag_junior'],
-            replace=True,
+            on_duplicate_key_update=True,
         )
 
-    def test_execute_delete_expired_sirets(self):
+    def test_execute_delete_expired_sirets(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.get_records = Mock(return_value=[("51837000000001",), ("51837000000002",)])
 
@@ -190,7 +216,7 @@ class TestExtractOfficesOperator(TestCase):
                 [expected_query_2])):
             self.fail(f"Extra companies should be delete, got :\n{mock_mysql_hook.run.call_args}")
 
-    def test_execute_don_t_delete_not_expired_sirets(self):
+    def test_execute_don_t_delete_not_expired_sirets(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.get_records = Mock(return_value=[("00000000001941",)])
         mock_mysql_hook.run = Mock()
@@ -198,7 +224,7 @@ class TestExtractOfficesOperator(TestCase):
 
         mock_mysql_hook.run.assert_not_called()
 
-    def test_execute_don_t_delete_invalid_sirets(self):
+    def test_execute_don_t_delete_invalid_sirets(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.get_records = Mock(return_value=[("invalids",)])
         mock_mysql_hook.run = Mock()
@@ -206,7 +232,7 @@ class TestExtractOfficesOperator(TestCase):
 
         mock_mysql_hook.run.assert_not_called()
 
-    def test_file_with_extra_column_should_skip_it(self):
+    def test_file_with_extra_column_should_skip_it(self) -> None:
         raisonsociale_with_semicolon = "SQUARE GEORGES; GUYON"
         insert_rows_mock = MagicMock(MySqlHook)
 
@@ -215,7 +241,7 @@ class TestExtractOfficesOperator(TestCase):
 
         self.assertEqual(0, nb_inserted_sirets)
 
-    def test_quotes_should_be_treated(self):
+    def test_quotes_should_be_treated(self) -> None:
         insert_rows_mock = Mock()
         mock_mysql_hook = MagicMock(MySqlHook, insert_rows=insert_rows_mock)
 
@@ -227,7 +253,7 @@ class TestExtractOfficesOperator(TestCase):
         self.assertIn('"quoted name', insert_rows__rows[0], 'the raison social should have the quote')
 
     @skipUnless(os.path.exists(join(TEST_DIR, 'data', 'huge_test.csv')), 'huge_test doesn\'t exists')
-    def test_file_with_huge_file(self):
+    def test_file_with_huge_file(self) -> None:
         try:
             self.execute(offices_filename=join(TEST_DIR, 'data', 'huge_test.csv'))
         except _csv.Error:

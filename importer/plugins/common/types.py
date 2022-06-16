@@ -15,7 +15,7 @@ if TYPE_CHECKING:
         json: Optional[Dict[str, Any]]
         value: Optional[Any]
 
-    class Context(TypedDict):
+    class Context(TypedDict, total=False):
         conf: AirflowConfigParser
         """
         The full configuration object located at

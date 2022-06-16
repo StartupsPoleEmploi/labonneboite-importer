@@ -4,8 +4,6 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
--e git+https://github.com/StartupsPoleEmploi/labonneboite-common.git@8a1d829645e066e374a27807c2da44b77e0ce76f#egg=labonneboite-common
-    # via -r requirements.in
 alembic==1.7.7
     # via apache-airflow
 amqp==5.1.1
@@ -184,6 +182,8 @@ jsonschema==3.2.0
     #   flask-appbuilder
 kombu==5.2.4
     # via celery
+labonneboite-common @ git+https://github.com/StartupsPoleEmploi/labonneboite-common.git@8a1d829645e066e374a27807c2da44b77e0ce76f
+    # via -r requirements.in
 lazy-object-proxy==1.7.1
     # via apache-airflow
 lockfile==0.12.2

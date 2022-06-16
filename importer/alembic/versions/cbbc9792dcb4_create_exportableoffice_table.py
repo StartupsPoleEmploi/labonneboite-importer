@@ -1,7 +1,7 @@
 """create ExportableOffice table
 
 Revision ID: 512434a29bd5
-Revises: 
+Revises:
 Create Date: 2022-05-11 14:05:08.704348
 
 """

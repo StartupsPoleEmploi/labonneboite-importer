@@ -6,3 +6,5 @@ mypy
 yapf
 pytest
 pytest-cov
+
+sqlalchemy-stubs

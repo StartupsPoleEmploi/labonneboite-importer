@@ -1,10 +1,10 @@
 import contextlib
 import csv
 from pathlib import Path
-from typing import Any, Optional, Iterator, List
+from typing import Any, Optional, Iterator, List, Iterable, TextIO
 
 from airflow.hooks.filesystem import FSHook
-from airflow.models import BaseOperator
+from airflow.models.baseoperator import BaseOperator
 
 from utils.csv import SemiColonDialect
 from utils.mysql_hook import MySqlHookOnDuplicateKey
@@ -54,10 +54,10 @@ class ExtractScoresOperator(BaseOperator):
         for row in rows:
             yield row + [''] * 5
 
-    def _insert_rows_with_default_values(self, rows_with_dfeault_values) -> None:
+    def _insert_rows_with_default_values(self, rows_with_default_values: Iterable[Iterable[Any]]) -> None:
         mysql_hook: MySqlHookOnDuplicateKey = self._get_mysql_hook()
         mysql_hook.insert_rows(
-            self.destination_table, rows_with_dfeault_values,
+            self.destination_table, rows_with_default_values,
             ['siret', 'score', 'raisonsociale', 'codenaf', 'codecommune', 'codepostal', 'departement'],
             on_duplicate_key_update=['score'])
 
@@ -71,30 +71,24 @@ class ExtractScoresOperator(BaseOperator):
 
     def _get_fs_hook(self) -> FSHook:
         if not self._fs_hook:  # pragma: no cover
-            self._fs_hook = FSHook(self.fs_conn_id)
+            self._fs_hook = FSHook(self.fs_conn_id)  # type: ignore
         return self._fs_hook
 
-    def _open_file(self) -> contextlib.closing:
+    def _open_file(self) -> contextlib.closing[TextIO]:
         path = self._get_file_path()
         return self._open_file_path(path)
 
-    def _open_file_path(self, path: Path) -> contextlib.closing:
+    def _open_file_path(self, path: Path) -> contextlib.closing[TextIO]:
         file = open(path)
         return contextlib.closing(file)
 
-    @classmethod
-    def _retrieve_rows_in_path(cls, path: Path) -> Rows:
-        with contextlib.closing(open(path)) as file:
-            return cls._retrieve_rows_in_file(file)
-
-    @classmethod
-    def _retrieve_rows_in_file(cls, file) -> Rows:
+    def _retrieve_rows_in_file(self, file: Iterable[str]) -> Rows:
         csv_reader = csv.reader(file, SemiColonDialect)
-        cls._check_rows_header(csv_reader)
+        self._check_rows_header(csv_reader)
         return csv_reader
 
     @staticmethod
-    def _check_rows_header(csv_reader: Iterator[List[str]]):
+    def _check_rows_header(csv_reader: Iterator[List[str]]) -> None:
         header = next(csv_reader)
         assert len(header) >= 2, "Scores csv should have at least 2 columns"
         assert header[0].lower() == "siret", f"Scores csv first row should be the siret (actually: {header[0]!r})"

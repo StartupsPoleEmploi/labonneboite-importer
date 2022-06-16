@@ -3,7 +3,7 @@ AIRFLOW_TEST_ENV= \
 	AIRFLOW_HOME=/tmp/airflow \
 	AIRFLOW__CORE__DAGS_FOLDER=${PWD}/importer/dags \
 	AIRFLOW__CORE__PLUGINS_FOLDER=${PWD}/importer/plugins \
-	PYTHONPATH=${PWD}/importer/dags:${PWD}/importer/plugins
+	${PYTHON_ENV}
 AIRFLOW_UID	?= 50000
 
 MIGRATION_MESSAGE	?=
@@ -12,6 +12,7 @@ PYTHON = ${VIRTUAL_ENV}/bin/python
 PYTHON_VERSION_FILE = .python-version
 PYTHON_INSTALLED_VERSION_FILE=.installed-python-version
 PYTHON_VERSION := $(shell cat ${PYTHON_VERSION_FILE})
+PYTHON_ENV = PYTHONPATH=${PWD}/importer/dags:${PWD}/importer/plugins
 
 TEST_FILES ?= importer
 TEST_COV_ARGS ?= --cov importer --cov-fail-under  90
@@ -36,12 +37,16 @@ init: init-venv init-airflow  ## init local environement
 init-airflow: init-airflow-dir  ## init airflow (available env var : USER and PASSWORD)
 	_AIRFLOW_WWW_USER_USERNAME="$${USER}" _AIRFLOW_WWW_USER_PASSWORD="$${PASSWORD}" docker-compose up airflow-init
 
-init-venv: ${PYTHON} init-pip requirements.dev.txt ${VIRTUAL_ENV}/bin/pip-sync  ## init local virtual env
-	${VIRTUAL_ENV}/bin/pip-sync requirements.dev.txt
+init-venv: ${PYTHON} init-pip requirements.dev.txt ${VIRTUAL_ENV}/bin/pip-sync install-dev-requirements  ## init local virtual env
 
 init-pip: ${PYTHON}
 	${PYTHON} -m pip install --upgrade pip==22.0.4
 
+install-requirements:  ## install requirements
+	${VIRTUAL_ENV}/bin/pip-sync requirements.txt
+
+install-dev-requirements:  ## install dev requirements
+	${VIRTUAL_ENV}/bin/pip-sync requirements.dev.txt
 
 # Utils
 # -----
@@ -65,7 +70,7 @@ migrate:
 test: test-init test-run  ## Init and run tests
 
 test-run:  ## Run tests
-	${AIRFLOW_TEST_ENV} pytest --import-mode importlib ${TEST_ARGS} ${TEST_FILES}
+	${AIRFLOW_TEST_ENV} ${VIRTUAL_ENV}/bin/pytest --import-mode importlib ${TEST_ARGS} ${TEST_FILES}
 
 test-init: init-venv test-init-db test-init-variables  ## Init tests
 
@@ -82,10 +87,12 @@ test-init-variables:
 lint: lint-flake8 lint-mypy  ## Lint and type check the project
 
 lint-flake8:
-	flake8 importer
+	${VIRTUAL_ENV}/bin/flake8 importer
+
+MYPY_FILES ?= importer/plugins importer/dags importer/tests
 
 lint-mypy:
-	cd importer/plugins; mypy --config-file=../../setup.cfg . ../dags ../tests
+	${PYTHON_ENV} ${VIRTUAL_ENV}/bin/mypy --config-file=setup.cfg ${MYPY_FILES}
 
 # Python virtual env
 # ------------------

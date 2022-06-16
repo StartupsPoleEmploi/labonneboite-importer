@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from tarfile import TarFile
 from typing import Dict, Optional, Any, Union

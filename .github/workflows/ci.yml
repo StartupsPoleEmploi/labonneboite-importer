@@ -1,0 +1,72 @@
+name: test
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9.11"
+
+      - name: Cache pip
+        id: cache-pip
+        uses: actions/cache@v3.0.4
+        with:
+          path: ${{ env.pythonLocation }}/*
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        if: steps.cache-pip.outputs.cache-hit != 'true'
+        run: make install-dev-requirements
+        env:
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
+
+      - name: Init test data
+        run: make test-init-db test-init-variables
+        env:
+          PYTHON_INSTALLED_VERSION_FILE: .python-version
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
+
+      - name: Test
+        run: make test-run
+        env:
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
+
+  ci:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9.11"
+
+      - name: Cache pip
+        id: cache-pip
+        uses: actions/cache@v3.0.4
+        with:
+          path: ${{ env.pythonLocation }}/*
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        if: steps.cache-pip.outputs.cache-hit != 'true'
+        run: make install-dev-requirements
+        env:
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
+
+      - name: Test
+        run: make lint
+        env:
+          VIRTUAL_ENV: ${{ env.pythonLocation }}
