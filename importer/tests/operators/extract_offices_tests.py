@@ -117,7 +117,7 @@ class TestExtractOfficesOperator(TestCase):
             'test_table',
             [["00000488794926"], ["00000533026381"], ["00000599101508"], ["00000815184353"]],
             ['siret'],
-            replace=True,
+            on_duplicate_key_update=True,
         )
 
     def test_NULL_values_are_saved_with_null(self):
@@ -130,7 +130,7 @@ class TestExtractOfficesOperator(TestCase):
             'test_table',
             [[None], [None], [None], [None]],
             ['trancheeffectif'],
-            replace=True,
+            on_duplicate_key_update=True,
         )
 
     def test_trancheffectif_should_be_transformed(self):
@@ -171,7 +171,7 @@ class TestExtractOfficesOperator(TestCase):
             'test_table',
             [[False], [False], [False], [False]],
             ['flag_junior'],
-            replace=True,
+            on_duplicate_key_update=True,
         )
 
     def test_execute_delete_expired_sirets(self):
