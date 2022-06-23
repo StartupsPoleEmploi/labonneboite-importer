@@ -34,13 +34,13 @@ all: init build startserver  ## init and start the local server
 
 init: init-venv init-airflow  ## init local environement
 
-init-airflow: init-airflow-dir  ## init airflow (available env var : USER and PASSWORD)
+init-airflow:  ## init airflow (available env var : USER and PASSWORD)
 	_AIRFLOW_WWW_USER_USERNAME="$${USER}" _AIRFLOW_WWW_USER_PASSWORD="$${PASSWORD}" docker-compose up airflow-init
 
-init-venv: ${PYTHON} init-pip requirements.dev.txt ${VIRTUAL_ENV}/bin/pip-sync install-dev-requirements  ## init local virtual env
+init-venv: ${PYTHON} init-pip requirements.dev.txt install-dev-requirements  ## init local virtual env
 
-init-pip: ${PYTHON}
-	${PYTHON} -m pip install --upgrade pip==22.0.4
+init-pip:
+	${PYTHON} -m pip install --upgrade pip==22.0.4 pip-tools==6.6.0
 
 install-requirements:  ## install requirements
 	${VIRTUAL_ENV}/bin/pip-sync requirements.txt
@@ -96,29 +96,26 @@ lint-mypy:
 
 # Python virtual env
 # ------------------
+PYENV = pyenv
 PYENV_ARG = --skip-existing
 PYENV_CFLAGS=$(shell pkg-config --cflags libffi)
 PYENV_LDFLAGS=$(shell pkg-config --libs libffi)
 
 ${PYTHON_VERSION_FILE}:
 ${PYTHON_INSTALLED_VERSION_FILE}: ${PYTHON_VERSION_FILE}
-	pyenv --version && pyenv install --version
+	${PYENV} --version && ${PYENV} install --version
 
 	CFLAGS="${PYENV_CFLAGS}" \
 		LDFLAGS="${PYENV_LDFLAGS}" \
 		CC="gcc-10" \
 		MAKEFLAGS= \
-		pyenv install ${PYENV_ARG} ${PYTHON_VERSION}
+		${PYENV} install ${PYENV_ARG} ${PYTHON_VERSION}
 	echo ${PYTHON_VERSION} > ${PYTHON_INSTALLED_VERSION_FILE}
 
 ${PYTHON}: ${PYTHON_INSTALLED_VERSION_FILE}
 	python3 -m pip install virtualenv
 	python3 -m virtualenv -p ${PYTHON_VERSION} ${VIRTUAL_ENV}
 	touch ${PYTHON}  # if the venv was already existing
-
-${VIRTUAL_ENV}/bin/pip-sync: ${VIRTUAL_ENV}/bin/pip-compile
-${VIRTUAL_ENV}/bin/pip-compile: ${PYTHON}
-	${PYTHON} -m pip install pip-tools==6.6.0
 
 
 # Requirements
@@ -132,7 +129,6 @@ requirements.dev.txt: requirements.txt
 
 .SUFFIXES: .in .txt
 .in.txt:
-	${MAKE} ${VIRTUAL_ENV}/bin/pip-compile
 	${VIRTUAL_ENV}/bin/pip-compile -o $@ -v $<
 
 
