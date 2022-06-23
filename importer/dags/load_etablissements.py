@@ -12,6 +12,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from operators.extract_offices import ExtractOfficesOperator
 from operators.extract_scores import ExtractScoresOperator
 from operators.find_last_file import FindLastFileOperator
+from operators.api_adresse import RetrieveAddressesOperator
 from operators.tarfile import UntarOperator
 
 default_args = {
@@ -90,7 +91,8 @@ with DAG("load-etablissements-2022-04",
         )
         score_path_sensor_task >> extract_scores_task
 
-    retrieve_geoloc_task = DummyOperator(task_id="retrieve_geoloc")
+    retrieve_geoloc_task = RetrieveAddressesOperator(task_id="retrieve_geoloc", source_table='etablissements_raw',
+                                                     mysql_conn_id='mysql_importer', http_conn_id='http_address')
 
     join = DummyOperator(
         task_id='join_operations',
@@ -105,8 +107,7 @@ with DAG("load-etablissements-2022-04",
 
 untar_group << [start_task, make_tmp_dir]
 
-untar_group >> offices_group >> join
+untar_group >> offices_group >> retrieve_geoloc_task >> join
 untar_group >> scores_group >> join
-untar_group >> retrieve_geoloc_task >> join
 
 join >> rmdir >> end_task
