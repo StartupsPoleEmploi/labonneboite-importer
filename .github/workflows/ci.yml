@@ -7,10 +7,11 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.9.11
+      - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.9.11"
+          cache: pip
+          python-version-file: '.python-version'
 
       - name: Cache pip
         id: cache-pip
@@ -24,14 +25,13 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-pip.outputs.cache-hit != 'true'
-        run: make install-dev-requirements
+        run: make init-pip install-dev-requirements
         env:
           VIRTUAL_ENV: ${{ env.pythonLocation }}
 
       - name: Init test data
         run: make test-init-db test-init-variables
         env:
-          PYTHON_INSTALLED_VERSION_FILE: .python-version
           VIRTUAL_ENV: ${{ env.pythonLocation }}
 
       - name: Test
@@ -62,7 +62,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-pip.outputs.cache-hit != 'true'
-        run: make install-dev-requirements
+        run: make init-pip install-dev-requirements
         env:
           VIRTUAL_ENV: ${{ env.pythonLocation }}
 
