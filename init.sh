@@ -91,6 +91,9 @@ run airflow connections add mysql_importer \
     --conn-schema ${IMPORTER_MYSQL_SCHEMA:-importer} \
     --conn-type mysql
 
+run airflow connections list --conn-id http_address | grep http_address > /dev/null \
+  || run airflow connections add http_address --conn-uri https://api-adresse.data.gouv.fr/
+
 pushd /sources
   run alembic -c importer/settings/alembic.ini upgrade head
 popd
