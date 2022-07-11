@@ -87,7 +87,7 @@ with DAG("load-etablissements-2022-04",
         extract_scores_task = ExtractScoresOperator(
             task_id="extract_scores",
             destination_table='etablissements_raw',
-            scores_filename=str(scores_path),
+            hiring_filename=str(scores_path),
         )
         score_path_sensor_task >> extract_scores_task
 

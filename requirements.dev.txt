@@ -297,7 +297,7 @@ kombu==5.2.4
     # via
     #   -r requirements.txt
     #   celery
-labonneboite-common @ git+https://github.com/StartupsPoleEmploi/labonneboite-common.git@8a1d829645e066e374a27807c2da44b77e0ce76f
+labonneboite-common @ git+https://github.com/StartupsPoleEmploi/labonneboite-common.git@f0dadcbb79338522169e586a9f4ec0a750920d00
     # via -r requirements.txt
 lazy-object-proxy==1.7.1
     # via

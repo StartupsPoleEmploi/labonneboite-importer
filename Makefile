@@ -64,6 +64,9 @@ migration:
 migrate:
 	docker-compose run --rm airflow-init
 
+migrate-down:
+	docker-compose run --rm -u "${UID}" -e HOME=/home/airflow/ alembic-cli downgrade -1
+
 # Testing
 # -------
 
