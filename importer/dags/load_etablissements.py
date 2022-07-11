@@ -13,7 +13,6 @@ from operators.extract_offices import ExtractOfficesOperator
 from operators.extract_scores import ExtractScoresOperator
 from operators.find_last_file import FindLastFileOperator
 from operators.api_adresse import RetrieveAddressesOperator
-from operators.tarfile import UntarOperator
 
 default_args = {
     "depends_on_past": False,
@@ -55,10 +54,13 @@ with DAG("load-etablissements-2022-04",
                 'FROM': "{{ task_instance.xcom_pull(task_ids='" + find_last_file.task_id + "') }}",
                 'TO': str(working_tmp_dir / 'source.tar')
             })
-        untar_last_file = UntarOperator(
+        untar_last_file = BashOperator(
             task_id='untar_last_tar',
-            source_path=working_tmp_dir / 'source.tar',
-            dest_path=working_tmp_dir
+            bash_command='tar -xf "${source_path}" -C "${dest_path}"',
+            env=dict(
+                source_path=working_tmp_dir / 'source.tar',
+                dest_path=working_tmp_dir
+            )
         )
 
         find_last_file >> copy_last_file_locally >> untar_last_file
