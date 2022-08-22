@@ -68,7 +68,7 @@ class ExtractScoresOperatorMysqlTestCase(TestCase):
         call_kwargs = self.operator.test_mysql_hook.insert_rows.call_args[1]
         self.assertIn('on_duplicate_key_update', call_kwargs)
         self.assertIsInstance(call_kwargs['on_duplicate_key_update'], list)
-        self.assertIn('score', call_kwargs['on_duplicate_key_update'])
+        self.assertIn('hiring', call_kwargs['on_duplicate_key_update'])
 
 
 class ExtractScoresOperatorFsHook(ExtractScoresOperator):
