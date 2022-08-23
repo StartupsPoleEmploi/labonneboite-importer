@@ -18,7 +18,7 @@ class ExtractScoresOperatorWithPresetRows(ExtractScoresOperator):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.test_mysql_hook = MagicMock(MySqlHookOnDuplicateKey)
 
-        super().__init__(*args, task_id='test', scores_filename='path/test.csv', destination_table=self.TABLE_NAME,
+        super().__init__(*args, task_id='test', hiring_filename='path/test.csv', destination_table=self.TABLE_NAME,
                          _mysql_hook=self.test_mysql_hook, **kwargs)
         self.rows_retrieved = False
 
@@ -68,13 +68,13 @@ class ExtractScoresOperatorMysqlTestCase(TestCase):
         call_kwargs = self.operator.test_mysql_hook.insert_rows.call_args[1]
         self.assertIn('on_duplicate_key_update', call_kwargs)
         self.assertIsInstance(call_kwargs['on_duplicate_key_update'], list)
-        self.assertIn('score', call_kwargs['on_duplicate_key_update'])
+        self.assertIn('hiring', call_kwargs['on_duplicate_key_update'])
 
 
 class ExtractScoresOperatorFsHook(ExtractScoresOperator):
     def __init__(self,
                  *args: Any,
-                 scores_filename: str,
+                 hiring_filename: str,
                  destination_table: str,
                  fs_conn_id: str = 'fs_default',
                  db_conn_id: str = 'mysql_importer',
@@ -83,7 +83,7 @@ class ExtractScoresOperatorFsHook(ExtractScoresOperator):
                  _mysql_hook: Optional[MySqlHookOnDuplicateKey] = None,
                  **kwargs: Any) -> None:
         super().__init__(*args,
-                         scores_filename=scores_filename,
+                         hiring_filename=hiring_filename,
                          destination_table=destination_table,
                          fs_conn_id=fs_conn_id,
                          db_conn_id=db_conn_id,
@@ -103,7 +103,7 @@ class ExtractScoresOperatorFileSystemTestCase(TestCase):
         self.fs_hook_mock = MagicMock(FSHook)
         self.fs_hook_mock.get_path = Mock(return_value='/test/')
         self.operator = ExtractScoresOperatorFsHook(task_id='test', _fs_hook=self.fs_hook_mock,
-                                                    scores_filename='path/score.csv',
+                                                    hiring_filename='path/score.csv',
                                                     destination_table='table_name')
 
     def execute(self, header: str = 'siret;predictions', content: str = "") -> Mock:

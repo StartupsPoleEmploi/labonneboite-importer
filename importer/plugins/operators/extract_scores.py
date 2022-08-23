@@ -18,7 +18,7 @@ class ExtractScoresOperator(BaseOperator):
 
     def __init__(self,
                  *args: Any,
-                 scores_filename: str,
+                 hiring_filename: str,
                  destination_table: str,
                  fs_conn_id: str = 'fs_default',
                  db_conn_id: str = 'mysql_importer',
@@ -26,7 +26,7 @@ class ExtractScoresOperator(BaseOperator):
                  _fs_hook: Optional[FSHook] = None,
                  _mysql_hook: Optional[MySqlHookOnDuplicateKey] = None,
                  **kwargs: Any):
-        self.scores_filename = scores_filename
+        self.hiring_filename = hiring_filename
         self.destination_table = destination_table
         self.fs_conn_id = fs_conn_id
         self.db_conn_id = db_conn_id
@@ -58,12 +58,12 @@ class ExtractScoresOperator(BaseOperator):
         mysql_hook: MySqlHookOnDuplicateKey = self._get_mysql_hook()
         mysql_hook.insert_rows(
             self.destination_table, rows_with_default_values,
-            ['siret', 'score', 'raisonsociale', 'codenaf', 'codecommune', 'codepostal', 'departement'],
-            on_duplicate_key_update=['score'])
+            ['siret', 'hiring', 'raisonsociale', 'codenaf', 'codecommune', 'codepostal', 'departement'],
+            on_duplicate_key_update=['hiring'])
 
     def _get_file_path(self) -> Path:
         base = self._get_base_path()
-        return Path(base) / self.scores_filename
+        return Path(base) / self.hiring_filename
 
     def _get_base_path(self) -> str:
         fs_hook = self._get_fs_hook()
