@@ -73,7 +73,7 @@ class TestExtractOfficesOperator(TestCase):
                           file_content.website, file_content.flag_poe_afpr, file_content.flag_pmsmp,
                           file_content.flag_junior, file_content.flag_senior, file_content.flag_handicap])
 
-        def add_quote(field: str):
+        def add_quote(field: str) -> str:
             if ';' in field:
                 return f'"{field}"'
             return field
