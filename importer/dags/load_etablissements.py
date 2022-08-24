@@ -52,13 +52,13 @@ with DAG("load-etablissements-2022-04",
             bash_command='rsync -h --progress "${FROM}" "${TO}"',
             env={
                 'FROM': "{{ task_instance.xcom_pull(task_ids='" + find_last_file.task_id + "') }}",
-                'TO': str(working_tmp_dir / 'source.tar')
+                'TO': str(working_tmp_dir / 'source.tar.gz')
             })
         untar_last_file = BashOperator(
             task_id='untar_last_tar',
             bash_command='tar -xf "${source_path}" -C "${dest_path}"',
             env=dict(
-                source_path=working_tmp_dir / 'source.tar',
+                source_path=working_tmp_dir / 'source.tar.gz',
                 dest_path=working_tmp_dir
             )
         )
