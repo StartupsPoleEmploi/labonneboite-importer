@@ -73,7 +73,13 @@ class TestExtractOfficesOperator(TestCase):
                           file_content.website, file_content.flag_poe_afpr, file_content.flag_pmsmp,
                           file_content.flag_junior, file_content.flag_senior, file_content.flag_handicap])
 
-        mocked_open = mock_open(read_data=f"{header}\n{';'.join(csv_fields)}\n")
+        def add_quote(field: str) -> str:
+            if ';' in field:
+                return f'"{field}"'
+            return field
+
+        csv_fields_with_quote = map(add_quote, csv_fields)
+        mocked_open = mock_open(read_data=f"{header}\n{';'.join(csv_fields_with_quote)}\n")
         with patch('operators.extract_offices.open', mocked_open):
             return self.execute(offices_filename='memory', _mysql_hook=_mysql_hook)
 
@@ -235,11 +241,15 @@ class TestExtractOfficesOperator(TestCase):
     def test_file_with_extra_column_should_skip_it(self) -> None:
         raisonsociale_with_semicolon = "SQUARE GEORGES; GUYON"
         insert_rows_mock = MagicMock(MySqlHook)
+        mock_mysql_hook = MagicMock(MySqlHook, insert_rows=insert_rows_mock)
 
-        nb_inserted_sirets = self.execute_with_file_content(_mysql_hook=insert_rows_mock,
+        nb_inserted_sirets = self.execute_with_file_content(_mysql_hook=mock_mysql_hook,
                                                             raisonsociale=raisonsociale_with_semicolon)
 
-        self.assertEqual(0, nb_inserted_sirets)
+        self.assertEqual(1, nb_inserted_sirets)
+        insert_rows__args = insert_rows_mock.call_args[0]
+        insert_rows__rows = insert_rows__args[1]
+        self.assertIn('SQUARE GEORGES; GUYON', insert_rows__rows[0], 'the raison social should have the semi colon')
 
     def test_quotes_should_be_treated(self) -> None:
         insert_rows_mock = Mock()
@@ -247,10 +257,7 @@ class TestExtractOfficesOperator(TestCase):
 
         nb_inserted_sirets = self.execute_with_file_content(raisonsociale='"quoted name', _mysql_hook=mock_mysql_hook)
 
-        self.assertEqual(1, nb_inserted_sirets)
-        insert_rows__args = insert_rows_mock.call_args[0]
-        insert_rows__rows = insert_rows__args[1]
-        self.assertIn('"quoted name', insert_rows__rows[0], 'the raison social should have the quote')
+        self.assertEqual(0, nb_inserted_sirets)
 
     @skipUnless(os.path.exists(join(TEST_DIR, 'data', 'huge_test.csv')), 'huge_test doesn\'t exists')
     def test_file_with_huge_file(self) -> None:
