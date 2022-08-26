@@ -24,7 +24,7 @@ fs_hook_path = Path('/{{ conn.fs_default.schema }}')
 data_path = fs_hook_path / Variable.get('data_path', default_var='/var/input')
 output_path = fs_hook_path / Variable.get('work_path', default_var='/var/output')
 filepath = data_path / Variable.get('etab_file_glob')
-working_tmp_dir = output_path / 'tmp' / "{{ts_nodash}}"
+working_tmp_dir = output_path / 'tmp' / "{{ ts_nodash }}"
 offices_path = working_tmp_dir / "etablissements" / "etablissements.csv"
 scores_path = working_tmp_dir / "inference" / "predictions" / "predictions.csv"
 
@@ -58,8 +58,8 @@ with DAG("load-etablissements-2022-04",
             task_id='untar_last_tar',
             bash_command='tar -xf "${source_path}" -C "${dest_path}"',
             env=dict(
-                source_path=working_tmp_dir / 'source.tar.gz',
-                dest_path=working_tmp_dir
+                source_path=str(working_tmp_dir / 'source.tar.gz'),
+                dest_path=str(working_tmp_dir),
             )
         )
 
