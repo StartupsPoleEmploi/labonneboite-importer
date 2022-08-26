@@ -14,7 +14,7 @@ RowsWithDefault = Iterator[List[str]]
 
 
 class ExtractScoresOperator(BaseOperator):
-    template_fields = []
+    template_fields = ["hiring_filename"]
 
     def __init__(self,
                  *args: Any,
