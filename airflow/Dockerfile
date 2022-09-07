@@ -9,7 +9,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -y install \
         git \
         libpq-dev \
-        gcc
+        gcc \
+        bzip2
 
 #ADD dags-airflow /opt/airflow/dags
 
