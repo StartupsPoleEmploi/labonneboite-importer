@@ -51,6 +51,7 @@ x-airflow-common:
     - ./importer/plugins:/opt/airflow/plugins:ro
     - ./airflow/opt/airflow/logs:/opt/airflow/logs
     - ${INPUT_DIR:-./importer/var/input}:/var/input
+    - ${WORK_DIR:-./importer/var/work}:/var/work
     - ${OUTPUT_DIR:-./importer/var/output}:/var/output
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
@@ -192,6 +193,7 @@ services:
     user: "0:0"
     volumes:
       - .:/sources
+      - ${WORK_DIR:-./importer/var/work}:/var/work
       - ${OUTPUT_DIR:-./importer/var/output}:/var/output
 
   airflow-cli:

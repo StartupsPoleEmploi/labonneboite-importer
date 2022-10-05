@@ -56,6 +56,7 @@ access : https://127.0.0.1:8080/ (HTTP_PORT may be changed in .env)
 |--------------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------|
 | _PIP_ADDITIONAL_REQUIREMENTS   |                       |                                                                                                                |
 | INPUT_DIR                      | ./importer/var/input  | directory where the importer file are read                                                                     |
+| WORK_DIR                       | ./importer/var/work   | directory where the importer write it results (and temporary files)                                            |
 | OUTPUT_DIR                     | ./importer/var/output | directory where the importer write it results (and temporary files)                                            |
 | AIRFLOW_UID                    | 50000                 | uid of the airflow user                                                                                        |
 | POSTGRES_USER                  | airflow               | airflow database for core and workers                                                                          | 

@@ -1,4 +1,5 @@
 {
   "data_path": "/var/input",
-  "work_path": "/var/output"
+  "work_path": "/var/work",
+  "output_path": "/var/output"
 }

@@ -69,6 +69,9 @@ mkdir -p /sources/airflow/opt/airflow/logs
 chown -R "${AIRFLOW_UID}:0" \
   /sources/airflow/opt/airflow/logs
 
+mkdir -p /var/work
+chown -R "${AIRFLOW_UID}:0" /var/work
+
 mkdir -p /var/output
 chown -R "${AIRFLOW_UID}:0" /var/output
 

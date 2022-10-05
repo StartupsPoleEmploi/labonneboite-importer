@@ -25,7 +25,7 @@ _PIP_ADDITIONAL_REQUIREMENTS := $(shell cat requirements.txt)
 # utils
 UID	:= $(shell id -u)
 
-.DEFAULT_GOAL := help
+.DEFAULT_GOAL := helprm in
 
 all: init build startserver  ## init and start the local server
 
