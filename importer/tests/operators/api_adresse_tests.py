@@ -13,6 +13,7 @@ from utils.mysql_hook import MySqlHookOnDuplicateKey
 
 
 class EmptyRetrieveAddressesOperator(RetrieveAddressesOperator):
+
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(task_id='test', source_table="test", **kwargs)
 
@@ -20,8 +21,7 @@ class EmptyRetrieveAddressesOperator(RetrieveAddressesOperator):
         self.retrieve_incomplete_address_called = True
         yield {"ok": "_retrieve_incomplete_address"}
 
-    def _retrieve_addresses(
-            self, incomplete_addresses: Iterator[dict[str, str]]) -> Addresses:
+    def _retrieve_addresses(self, incomplete_addresses: Iterator[dict[str, str]]) -> Addresses:
         self.retrieved_addresses = list(incomplete_addresses)
         yield {"ok": "_retrieve_addresses"}
 
@@ -33,13 +33,11 @@ REQUIRED_ROWS = ['siret', 'numerorue', 'libellerue', 'codepostal', 'codecommune'
 TEST_VALUES = ["12345678901234", "1", "rue du test", "75011", "75056"]
 
 
-def _create_sql_result(
-        siret: str = "12345678901234",
-        numerorue: str = "1",
-        libellerue: str = "rue du test",
-        codepostal: str = "75011",
-        codecommune: str = "75056"
-) -> dict[str, str]:
+def _create_sql_result(siret: str = "12345678901234",
+                       numerorue: str = "1",
+                       libellerue: str = "rue du test",
+                       codepostal: str = "75011",
+                       codecommune: str = "75056") -> dict[str, str]:
     return dict(
         siret=siret,
         numerorue=numerorue,
@@ -50,6 +48,7 @@ def _create_sql_result(
 
 
 class RetrieveIncompleteAddressOperator(RetrieveAddressesOperator):
+
     def __init__(self, source_table: str = 'source', **kwargs: Any) -> None:
         self.get_records_mock = Mock(return_value=iter([TEST_VALUES]))
         self.mysql_hook_mock = MagicMock(MySqlHookOnDuplicateKey, get_records=self.get_records_mock)
@@ -59,8 +58,7 @@ class RetrieveIncompleteAddressOperator(RetrieveAddressesOperator):
         self.found_addresses: Optional[list[dict[str, str]]] = None
         self.inserted_addresses: Optional[list[dict[str, str]]] = None
 
-    def _retrieve_addresses(
-            self, incomplete_addresses: Iterator[dict[str, str]]) -> Addresses:
+    def _retrieve_addresses(self, incomplete_addresses: Iterator[dict[str, str]]) -> Addresses:
         self.found_addresses = list(incomplete_addresses)
         yield from []
 
@@ -69,10 +67,10 @@ class RetrieveIncompleteAddressOperator(RetrieveAddressesOperator):
 
 
 class RetrieveGeolocationOperator(RetrieveAddressesOperator):
+
     def __init__(self, source_table: str = 'source', **kwargs: Any) -> None:
-        self.http_hook_result = MagicMock(requests.Response,
-                                          text="siret,full_address,city_code,latitude,longitude\n"
-                                               "12345678901234,1 RUE DU TEST 75001 PARIS,,47.840738,1.387486")
+        csv_content = self.create_csv_header() + "\n" + self.create_csv_row()
+        self.http_hook_result = MagicMock(requests.Response, text=csv_content)
         self.http_hook_run_mock = Mock(return_value=self.http_hook_result)
         self.http_hook_mock = MagicMock(HttpHook, run=self.http_hook_run_mock)
 
@@ -80,6 +78,30 @@ class RetrieveGeolocationOperator(RetrieveAddressesOperator):
 
         self.inserted_addresses: Optional[list[dict[str, str]]] = None
         self.retrieve_incomplete_address_mock_return_value: Iterable[dict[str, str]] = [_create_sql_result()]
+
+    @property
+    def csv_content(self) -> str:
+        return str(self.http_hook_result.text)
+
+    @csv_content.setter
+    def csv_content(self, value: str) -> None:
+        self.http_hook_result.text = value
+
+    @csv_content.deleter
+    def csv_content(self) -> None:
+        del self.http_hook_result.text
+
+    @staticmethod
+    def create_csv_header() -> str:
+        return "siret,full_address,city_code,latitude,longitude"
+
+    @staticmethod
+    def create_csv_row(siret: str = '12345678901234',
+                       full_address: str = '1 RUE DU TEST 75001 PARIS',
+                       city_code: str = '',
+                       latitude: str = '47.840738',
+                       longitude: str = '1.387486') -> str:
+        return f'{siret},{full_address},{city_code},{latitude},{longitude}'
 
     def _retrieve_incomplete_address(self) -> Generator[dict[str, str], None, None]:
         yield from self.retrieve_incomplete_address_mock_return_value
@@ -89,6 +111,7 @@ class RetrieveGeolocationOperator(RetrieveAddressesOperator):
 
 
 class InsertAddressesOperator(RetrieveAddressesOperator):
+
     def __init__(self, **kwargs: Any) -> None:
         self.mysql_hook_mock = MagicMock(MySqlHookOnDuplicateKey)
         super().__init__(task_id='test', source_table='test_table', _mysql_hook=self.mysql_hook_mock, **kwargs)
@@ -96,16 +119,12 @@ class InsertAddressesOperator(RetrieveAddressesOperator):
     def _retrieve_incomplete_address(self) -> Generator[dict[str, str], None, None]:
         yield _create_sql_result()
 
-    def _retrieve_addresses(
-            self, incomplete_addresses: Iterator[dict[str, str]]) -> Addresses:
-        yield {
-            'siret': 'siret value',
-            'coordinates_x': 'coordinates_x value',
-            'coordinates_y': 'coordinates_y value'
-        }
+    def _retrieve_addresses(self, incomplete_addresses: Iterator[dict[str, str]]) -> Addresses:
+        yield {'siret': 'siret value', 'coordinates_x': 'coordinates_x value', 'coordinates_y': 'coordinates_y value'}
 
 
 class TestRetrieveAddresses(TestCase):
+
     def test_execute(self) -> None:
         operator = EmptyRetrieveAddressesOperator()
 
@@ -114,14 +133,18 @@ class TestRetrieveAddresses(TestCase):
         self.assertTrue(operator.retrieve_incomplete_address_called,
                         '_retrieve_incomplete_address should have been call')
         self.assertIsNotNone(operator.retrieved_addresses, '_retrieve_addresses should have been call')
-        self.assertListEqual([{"ok": "_retrieve_incomplete_address"}], operator.retrieved_addresses,
-                             '_retrieve_addresses should have been call with _retrieve_incomplete_address result')
+        self.assertListEqual([{
+            "ok": "_retrieve_incomplete_address"
+        }], operator.retrieved_addresses, ('_retrieve_addresses should have been call with '
+                                           '_retrieve_incomplete_address result'))
         self.assertIsNotNone(operator.inserted_addresses, '_insert_addresses should have been call')
-        self.assertListEqual([{"ok": "_retrieve_addresses"}], operator.inserted_addresses,
-                             '_insert_addresses should have been call with _retrieve_addresses result')
+        self.assertListEqual([{
+            "ok": "_retrieve_addresses"
+        }], operator.inserted_addresses, '_insert_addresses should have been call with _retrieve_addresses result')
 
 
 class TestRetrieveIncompleteAddressOperator(TestCase):
+
     def setUp(self) -> None:
         self.operator = RetrieveIncompleteAddressOperator(source_table='test_table')
         self.operator.execute(Context())
@@ -136,6 +159,7 @@ class TestRetrieveIncompleteAddressOperator(TestCase):
                       'the execute should select the rows in the "source_table" (from the kwarg)')
 
     def test_should_select_rows_required_to_retrieve_and_insert_addresses(self) -> None:
+
         def get_rows_from_sql_query(sql_query: str) -> list[str]:
             result = re.match('SELECT (.*) FROM', sql_query)
             assert result is not None, 'Request seem malformed, SELECT ... FROM not found in it'
@@ -145,8 +169,7 @@ class TestRetrieveIncompleteAddressOperator(TestCase):
 
         sql: str = self.operator.get_records_mock.call_args[0][0]
         rows = get_rows_from_sql_query(sql)
-        self.assertEqual(REQUIRED_ROWS, rows,
-                         f"The database query should select : {REQUIRED_ROWS!r}.\nQuery:{sql}")
+        self.assertEqual(REQUIRED_ROWS, rows, f"The database query should select : {REQUIRED_ROWS!r}.\nQuery:{sql}")
 
     def test_should_retrieve_addresses_with_query_result_as_dict(self) -> None:
         assert self.operator.found_addresses is not None, "_retrieve_addresses should have been call"
@@ -157,10 +180,8 @@ class TestRetrieveIncompleteAddressOperator(TestCase):
         sql: str = self.operator.get_records_mock.call_args[0][0]
         self.assertIn(' WHERE ', sql, "The database query should be filter")
         where_clause = sql.split(' WHERE ')[1]
-        self.assertIn('coordinates_x IS NULL', where_clause,
-                      "The database query should be filter by the coordinates_x")
-        self.assertIn('coordinates_y IS NULL', where_clause,
-                      "The database query should be filter by the coordinates_y")
+        self.assertIn('coordinates_x IS NULL', where_clause, "The database query should be filter by the coordinates_x")
+        self.assertIn('coordinates_y IS NULL', where_clause, "The database query should be filter by the coordinates_y")
 
 
 class Unset:
@@ -168,12 +189,13 @@ class Unset:
 
 
 class TestRetrieveGeolocationOperator(TestCase):
+
     def setUp(self) -> None:
         self.operator = RetrieveGeolocationOperator()
 
-    def execute(
-            self, nb_result: int = 1, **kwargs: str
-    ) -> tuple[list[str], list[list[str]], dict[str, Union[str, list[str]]]]:
+    def execute(self,
+                nb_result: int = 1,
+                **kwargs: str) -> tuple[list[str], list[list[str]], dict[str, Union[str, list[str]]]]:
         result = _create_sql_result(**kwargs)
         self.operator.retrieve_incomplete_address_mock_return_value = iter([result] * nb_result)
         self.operator.execute(Context())
@@ -274,8 +296,7 @@ class TestRetrieveGeolocationOperator(TestCase):
     def test_call_the_api_by_bulk(self) -> None:
         _, rows, _ = self.execute(nb_result=2000)
 
-        self.assertEqual(2, self.operator.http_hook_mock.run.call_count,
-                         'the operator should have call twice the api')
+        self.assertEqual(2, self.operator.http_hook_mock.run.call_count, 'the operator should have call twice the api')
 
     def test_retrieve_the_data_to_be_save(self) -> None:
         self.execute()
@@ -296,8 +317,24 @@ class TestRetrieveGeolocationOperator(TestCase):
         self.assertEqual("47.840738", self.operator.inserted_addresses[0]["coordinates_y"],
                          "the y coordinate to be inserted should be the latitude from the api result")
 
+    def test_filter_retrieved_data_remove_lines_with_empty_result(self) -> None:
+        self.operator.csv_content = "\n".join([
+            self.operator.create_csv_header(),
+            self.operator.create_csv_row(siret=''),
+            self.operator.create_csv_row(longitude=''),
+            self.operator.create_csv_row(latitude=''),
+        ])
+
+        self.execute()
+
+        assert self.operator.inserted_addresses is not None
+        self.assertIsNotNone(self.operator.inserted_addresses)
+        self.assertEqual(0, len(self.operator.inserted_addresses),
+                         'the operator should be call without the incomplete data (aka: none in this test)')
+
 
 class TestInsertAddressesOperator(TestCase):
+
     def test_execute_should_upsert_rows(self) -> None:
         self.operator = InsertAddressesOperator()
         self.operator.execute(Context())

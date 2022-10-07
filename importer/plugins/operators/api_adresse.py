@@ -29,10 +29,14 @@ class RetrieveAddressesOperator(BaseOperator):
     Find the missing addresses
     """
 
-    def __init__(self, source_table: str, mysql_conn_id: str = MySqlHookOnDuplicateKey.default_conn_name,
-                 http_conn_id: str = 'http_address', chunk_size: int = 1000,
+    def __init__(self,
+                 source_table: str,
+                 mysql_conn_id: str = MySqlHookOnDuplicateKey.default_conn_name,
+                 http_conn_id: str = 'http_address',
+                 chunk_size: int = 1000,
                  _mysql_hook: Optional[MySqlHookOnDuplicateKey] = None,
-                 _http_hook: Optional[HttpHook] = None, **kwargs: Any):
+                 _http_hook: Optional[HttpHook] = None,
+                 **kwargs: Any):
         super().__init__(**kwargs)
         self.source_table = source_table
         self.chunk_size = chunk_size
@@ -46,6 +50,11 @@ class RetrieveAddressesOperator(BaseOperator):
         addresses = self._retrieve_addresses(incomplete_addresses)
         self._insert_addresses(addresses)
 
+    def _filter_invalid_addresses(self, addresses: Addresses) -> Addresses:
+        for address in addresses:
+            if all(address.values()):
+                yield address
+
     def _retrieve_incomplete_address(self) -> Generator[Dict[str, str], None, None]:
         rows = "siret", "numerorue", "libellerue", "codepostal", "codecommune"
         records = self._retrieve_incomplete_address_records(rows)
@@ -53,9 +62,8 @@ class RetrieveAddressesOperator(BaseOperator):
 
     def _retrieve_incomplete_address_records(self, rows: Iterable[str]) -> Iterator[Iterable[str]]:
         mysql_hook = self._get_mysql_hook()
-        result: Iterator[list[str]] = mysql_hook.get_records(
-            f"SELECT {', '.join(rows)} FROM {self.source_table} "
-            "WHERE coordinates_x IS NULL OR coordinates_y IS NULL")
+        result: Iterator[list[str]] = mysql_hook.get_records(f"SELECT {', '.join(rows)} FROM {self.source_table} "
+                                                             "WHERE coordinates_x IS NULL OR coordinates_y IS NULL")
         return result
 
     @staticmethod
@@ -68,20 +76,18 @@ class RetrieveAddressesOperator(BaseOperator):
     def _get_full_address(cls, incomplete_address: Dict[str, str]) -> str:
         city = cls._get_commune_name(incomplete_address['codecommune'])
         zipcode = incomplete_address['codepostal']
-        street_name, street_number = cls._handle_lieu_dit(
-            street_number=incomplete_address['numerorue'],
-            street_name=incomplete_address['libellerue']
-        )
+        street_name, street_number = cls._handle_lieu_dit(street_number=incomplete_address['numerorue'],
+                                                          street_name=incomplete_address['libellerue'])
         full_address = f"{street_number} {street_name} {zipcode} {city}"
         return full_address.strip()
 
-    def _retrieve_addresses(
-            self, incomplete_addresses: Iterator[Dict[str, str]]) -> Addresses:
+    def _retrieve_addresses(self, incomplete_addresses: Iterator[Dict[str, str]]) -> Addresses:
         for string_io in self._generate_api_files(incomplete_addresses):
-            yield from self._retrieve_addresses_from_file(string_io)
+            addresses = self._retrieve_addresses_from_file(string_io)
+            filtered_addresses = self._filter_invalid_addresses(addresses)
+            yield from filtered_addresses
 
-    def _generate_api_files(
-            self, incomplete_addresses: Iterator[Dict[str, str]]) -> Generator[io.StringIO, None, None]:
+    def _generate_api_files(self, incomplete_addresses: Iterator[Dict[str, str]]) -> Generator[io.StringIO, None, None]:
         headers = ["siret", "full_address", "citycode"]
         string_io, writer = self._create_address_api_writer(headers)
         i = 0
@@ -113,16 +119,12 @@ class RetrieveAddressesOperator(BaseOperator):
     @retry(stop=stop_after_attempt(10) | stop_after_delay(30), wait=wait_fixed(10))
     def _retrieve_addresses_from_file_content(self, content: bytes) -> requests.Response:
         http_hook = self._get_http_hook()
-        response: requests.Response = http_hook.run(
-            '/search/csv/',
-            files={
-                "data": content
-            },
-            params={
-                "columns": "full_address",
-                "city_code": "city_code",
-            }
-        )
+        response: requests.Response = http_hook.run('/search/csv/',
+                                                    files={"data": content},
+                                                    params={
+                                                        "columns": "full_address",
+                                                        "city_code": "city_code",
+                                                    })
         return response
 
     @staticmethod
@@ -157,9 +159,7 @@ class RetrieveAddressesOperator(BaseOperator):
         return string_io, writer
 
     def _generate_address_api_rows(
-            self,
-            incomplete_addresses: Iterator[Dict[str, str]]
-    ) -> Generator[Dict[str, str], None, None]:
+            self, incomplete_addresses: Iterator[Dict[str, str]]) -> Generator[Dict[str, str], None, None]:
         for incomplete_address in incomplete_addresses:
             try:
                 yield {
@@ -173,8 +173,8 @@ class RetrieveAddressesOperator(BaseOperator):
 
     def _insert_addresses(self, addresses: Addresses) -> None:
         rows = self._format_rows_to_insert(addresses)
-        self._get_mysql_hook().insert_rows(self.source_table, rows,
-                                           ['siret', 'coordinates_x', 'coordinates_y'] + DEFAULT_FIELDS,
+        self._get_mysql_hook().insert_rows(self.source_table,
+                                           rows, ['siret', 'coordinates_x', 'coordinates_y'] + DEFAULT_FIELDS,
                                            on_duplicate_key_update=['coordinates_x', 'coordinates_y'])
 
     @staticmethod
