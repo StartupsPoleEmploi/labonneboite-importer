@@ -7,10 +7,10 @@ ARG AIRFLOW_HOME=/opt/airflow
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get -y install \
-        git \
-        libpq-dev \
-        gcc \
-        bzip2
+    git \
+    libpq-dev \
+    gcc \
+    bzip2
 
 #ADD dags-airflow /opt/airflow/dags
 
@@ -28,5 +28,4 @@ RUN ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip install --upgrade pip && \
 COPY requirements.txt /requirements.txt
 
 RUN ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip-sync /requirements.txt
-
 
