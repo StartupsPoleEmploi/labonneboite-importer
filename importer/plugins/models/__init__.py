@@ -29,7 +29,8 @@ class ExportableOffice(FinalOfficeMixin, Base):
         # Improve performance of create_index.py remove_scam_emails()
         # by quickly locating offices having a given scam email.
         Index('_email', 'email'),
-    )
+    ) + FinalOfficeMixin.__table_args__
+
 
 # class Geolocation(Base):
 #     """
