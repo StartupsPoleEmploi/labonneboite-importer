@@ -8,8 +8,8 @@ import _csv
 from airflow.hooks.filesystem import FSHook
 from airflow.providers.mysql.hooks.mysql import MySqlHook
 
-from common.types import Context
-from operators.extract_offices import ExtractOfficesOperator, Office, FIELDS
+from plugins.common.types import Context
+from plugins.operators.extract_offices import ExtractOfficesOperator, Office, FIELDS
 
 TEST_DIR = join(dirname(dirname(dirname(__file__))), 'tests')
 
@@ -41,7 +41,7 @@ def create_office_with_default() -> Office:
 
 class OfficeTestCase(TestCase):
 
-    @patch('operators.extract_offices.get_department_from_zipcode', return_value="OK")
+    @patch('plugins.operators.extract_offices.get_department_from_zipcode', return_value="OK")
     def test_department(self, _: Mock) -> None:
         office = create_office()
         self.assertEqual(office.departement, "OK")
@@ -80,7 +80,7 @@ class TestExtractOfficesOperator(TestCase):
 
         csv_fields_with_quote = map(add_quote, csv_fields)
         mocked_open = mock_open(read_data=f"{header}\n{';'.join(csv_fields_with_quote)}\n")
-        with patch('operators.extract_offices.open', mocked_open):
+        with patch('plugins.operators.extract_offices.open', mocked_open):
             return self.execute(offices_filename='memory', _mysql_hook=_mysql_hook)
 
     def test_fields(self) -> None:
@@ -125,7 +125,7 @@ class TestExtractOfficesOperator(TestCase):
     def test_execute_create_companies(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.insert_rows = Mock()
-        with patch('operators.extract_offices.FIELDS', ['siret']):
+        with patch('plugins.operators.extract_offices.FIELDS', ['siret']):
             self.execute(_mysql_hook=mock_mysql_hook)
 
         self.assertEqual(2, mock_mysql_hook.insert_rows.call_count)
@@ -154,7 +154,7 @@ class TestExtractOfficesOperator(TestCase):
         result = mock_mysql_hook.insert_rows.call_args[0][1][0][FIELDS.index('trancheeffectif')]
         self.assertEqual("00", result, 'The "trancheeffectif" should be transform from "0-0" to "00"')
 
-    @patch('operators.extract_offices.is_siret', return_value=False)
+    @patch('plugins.operators.extract_offices.is_siret', return_value=False)
     def test_siret_format(self, is_siret_mock: Mock) -> None:
         nb_invalid_inserted_siret = self.execute_with_file_content(siret='invalid siret')
 
@@ -165,8 +165,8 @@ class TestExtractOfficesOperator(TestCase):
 
         self.assertEqual(0, nb_null_inserted_siret, "Office with NULL shouldn't be save")
 
-    @patch('operators.extract_offices.get_department_from_zipcode', return_value='99')
-    @patch('operators.extract_offices.DEPARTEMENTS', new=['01'])
+    @patch('plugins.operators.extract_offices.get_department_from_zipcode', return_value='99')
+    @patch('plugins.operators.extract_offices.DEPARTEMENTS', new=['01'])
     def test_department(self, get_department_from_zipcode_mock: Mock) -> None:
         nb_inserted_siret = self.execute_with_file_content(codepostal='99999')
 
@@ -196,7 +196,7 @@ class TestExtractOfficesOperator(TestCase):
     def test_NULL_values_are_saved_with_default(self) -> None:
         mock_mysql_hook = MagicMock(MySqlHook)
         mock_mysql_hook.insert_rows = Mock()
-        with patch('operators.extract_offices.FIELDS', ['flag_junior']):
+        with patch('plugins.operators.extract_offices.FIELDS', ['flag_junior']):
             self.execute(_mysql_hook=mock_mysql_hook)
 
         mock_mysql_hook.insert_rows.assert_called_with(

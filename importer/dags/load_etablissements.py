@@ -9,10 +9,10 @@ from airflow.utils.task_group import TaskGroup
 from airflow.utils.trigger_rule import TriggerRule
 from airflow import DAG
 
-from operators.api_adresse import RetrieveAddressesOperator
-from operators.extract_offices import ExtractOfficesOperator
-from operators.extract_scores import ExtractScoresOperator
-from operators.find_last_file import FindLastFileOperator
+from plugins.operators.api_adresse import RetrieveAddressesOperator
+from plugins.operators.extract_offices import ExtractOfficesOperator
+from plugins.operators.extract_scores import ExtractScoresOperator
+from plugins.operators.find_last_file import FindLastFileOperator
 
 default_args = {
     "depends_on_past": False,

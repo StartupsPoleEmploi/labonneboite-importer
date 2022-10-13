@@ -4,12 +4,12 @@ import tempfile
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 
-from operators.find_last_file import FindLastFileOperator
+from plugins.operators.find_last_file import FindLastFileOperator
 
 from airflow.exceptions import AirflowSkipException
 from airflow.hooks.filesystem import FSHook
 from airflow.models.dag import DAG
-from common.types import Context
+from plugins.common.types import Context
 from pendulum import DateTime, UTC  # type: ignore
 from datetime import timedelta
 

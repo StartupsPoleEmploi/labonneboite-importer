@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, Mock
 from airflow.providers.mysql.hooks.mysql import MySQLConnectionTypes
 from mysql.connector.abstracts import MySQLConnectionAbstract
 
-from utils.mysql_hook import MySqlHookOnDuplicateKey
+from plugins.utils.mysql_hook import MySqlHookOnDuplicateKey
 
 
 class MySqlHookOnDuplicateKeyWithoutConnexions(MySqlHookOnDuplicateKey):

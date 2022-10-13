@@ -1,6 +1,6 @@
 import unittest
 
-from utils.get_departement_from_zipcode import get_department_from_zipcode
+from plugins.utils.get_departement_from_zipcode import get_department_from_zipcode
 
 
 class GetDepartmentFromZipcodeTestCase(unittest.TestCase):

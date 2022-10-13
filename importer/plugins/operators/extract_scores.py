@@ -6,8 +6,8 @@ from typing import Any, Optional, Iterator, List, Iterable, TextIO
 from airflow.hooks.filesystem import FSHook
 from airflow.models.baseoperator import BaseOperator
 
-from utils.csv import SemiColonDialect
-from utils.mysql_hook import MySqlHookOnDuplicateKey
+from ..utils.csv import SemiColonDialect
+from ..utils.mysql_hook import MySqlHookOnDuplicateKey
 
 Rows = Iterator[List[str]]
 RowsWithDefault = Iterator[List[str]]

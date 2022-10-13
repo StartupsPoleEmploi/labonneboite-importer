@@ -12,11 +12,11 @@ from labonneboite_common.departements import DEPARTEMENTS
 from labonneboite_common.siret import is_siret
 from sqlalchemy import ColumnDefault
 
-from common.types import Context
-from models import ExportableOffice
-from utils.csv import SemiColonDialect
-from utils.get_departement_from_zipcode import get_department_from_zipcode
-from utils.mysql_hook import MySqlHookOnDuplicateKey
+from ..common.types import Context
+from ..models import ExportableOffice
+from ..utils.csv import SemiColonDialect
+from ..utils.get_departement_from_zipcode import get_department_from_zipcode
+from ..utils.mysql_hook import MySqlHookOnDuplicateKey
 
 # This list contains siret that must not be found in data,
 # we use it as a test : if one of those is found in data, we stop the importer

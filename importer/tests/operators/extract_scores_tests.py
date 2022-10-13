@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, Mock, mock_open, patch
 
 from airflow.hooks.filesystem import FSHook
 
-from operators.extract_scores import ExtractScoresOperator, Rows
-from utils.mysql_hook import MySqlHookOnDuplicateKey
+from plugins.operators.extract_scores import ExtractScoresOperator, Rows
+from plugins.utils.mysql_hook import MySqlHookOnDuplicateKey
 
 EXPECTED_ROW_LENGTH = 7
 
@@ -108,7 +108,7 @@ class ExtractScoresOperatorFileSystemTestCase(TestCase):
 
     def execute(self, header: str = 'siret;predictions', content: str = "") -> Mock:
         mock: Mock = mock_open(read_data=f'{header}\n{content}')
-        with patch('operators.extract_scores.open', mock):
+        with patch('plugins.operators.extract_scores.open', mock):
             self.operator.execute({})
         return mock
 

@@ -9,7 +9,7 @@ from airflow.models.baseoperator import BaseOperator
 from pendulum.datetime import DateTime
 from pendulum.tz.timezone import UTC
 
-from common.types import Context
+from ..common.types import Context
 
 TimeIntervale = Tuple[DateTime, DateTime]
 

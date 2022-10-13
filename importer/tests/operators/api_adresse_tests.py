@@ -7,9 +7,9 @@ from unittest.mock import Mock, MagicMock
 import requests
 from airflow.providers.http.hooks.http import HttpHook
 
-from common.types import Context
-from operators.api_adresse import RetrieveAddressesOperator, Addresses
-from utils.mysql_hook import MySqlHookOnDuplicateKey
+from plugins.common.types import Context
+from plugins.operators.api_adresse import RetrieveAddressesOperator, Addresses
+from plugins.utils.mysql_hook import MySqlHookOnDuplicateKey
 
 
 class EmptyRetrieveAddressesOperator(RetrieveAddressesOperator):

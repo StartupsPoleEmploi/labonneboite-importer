@@ -10,9 +10,9 @@ from tenacity import retry
 from tenacity.stop import stop_after_attempt, stop_after_delay
 from tenacity.wait import wait_fixed
 
-from common.types import Context
-from utils.codecommune import CODE_COMMUNE
-from utils.mysql_hook import MySqlHookOnDuplicateKey
+from ..common.types import Context
+from ..utils.codecommune import CODE_COMMUNE
+from ..utils.mysql_hook import MySqlHookOnDuplicateKey
 
 DEFAULT_FIELDS = ['raisonsociale', 'codenaf', 'codecommune', 'codepostal', 'departement']
 
