@@ -20,3 +20,4 @@ venv/
 importer/var/*
 .idea/
 docker-compose.override.yml
+testResults.tar.gz

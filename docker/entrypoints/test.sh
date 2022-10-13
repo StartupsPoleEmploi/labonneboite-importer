@@ -9,11 +9,9 @@ function runit() {
     return $?
 }
 
-
+# run the init sequence
 ./docker/entrypoints/init.sh
 
-
-pushd ./importer
 # run the tests
 # -- lint
 runit poetry run flake8 importer --output-file flake8.txt || echo "FAILED flake"
@@ -30,10 +28,11 @@ runit poetry build
 
 # prepare test results
 echo "Moving test results file..."
+
 mkdir -p testResults
 chown -R "${AIRFLOW_UID}:0" \
   /sources/testResults
 mv *.xml  ./testResults
 mv *.html  ./testResults
+
 echo "Done"
-popd
