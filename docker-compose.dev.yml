@@ -25,7 +25,7 @@
 #
 # Feel free to modify this file to suit your needs.
 ---
-version: '3'
+version: '3.7'
 
 x-airflow-common:
   &airflow-common
@@ -93,7 +93,8 @@ services:
       MYSQL_USER: ${IMPORTER_MYSQL_LOGIN:-importer}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "--user=$$MYSQL_USER", "--password=$$MYSQL_PASSWORD", "-h", "localhost"]
+      # test: ["CMD", "mysqladmin" ,"ping", "--user=$$MYSQL_USER", "--password=$$MYSQL_PASSWORD", "-h", "localhost"]
+      test: ["CMD", "mysqladmin" ,"ping", "--user=importer", "--password=importer", "-h", "localhost"]
       interval: 5s
       retries: 5
 
@@ -178,11 +179,7 @@ services:
 
   airflow-init:
     <<: *airflow-common
-    entrypoint: /bin/bash
-    # yamllint disable rule:line-length
-    command:
-      - /sources/init.sh
-    # yamllint enable rule:line-length
+    entrypoint: /bin/bash ./docker/entrypoints/init.sh
     environment:
       <<: *airflow-common-env
       AIRFLOW_UID: ${AIRFLOW_UID:-50000}
@@ -192,7 +189,6 @@ services:
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
     user: "0:0"
     volumes:
-      - .:/sources
       - ${WORK_DIR:-./importer/var/work}:/var/work
       - ${OUTPUT_DIR:-./importer/var/output}:/var/output
 
