@@ -14,16 +14,6 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     gcc \
     bzip2
 
-#ADD dags-airflow /opt/airflow/dags
-
-
-# RUN ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip install --upgrade pip && \
-#     ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip install pip-tools
-
-# COPY requirements.txt /requirements.txt
-
-# RUN ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip-sync /requirements.txt
-
 # copy sources
 COPY . /sources
 

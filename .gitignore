@@ -21,3 +21,4 @@ importer/var/*
 .idea/
 docker-compose.override.yml
 testResults.tar.gz
+.pytest_cache
