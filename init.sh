@@ -91,7 +91,7 @@ run airflow connections add mysql_importer \
     --conn-login ${IMPORTER_MYSQL_LOGIN:-importer} \
     --conn-password ${IMPORTER_MYSQL_PASSWORD:-importer} \
     --conn-port ${IMPORTER_MYSQL_PORT:-3306} \
-    --conn-schema ${IMPORTER_MYSQL_SCHEMA:-importer} \
+    --conn-schema importer \
     --conn-type mysql
 
 run airflow connections list --conn-id http_address | grep http_address > /dev/null \
