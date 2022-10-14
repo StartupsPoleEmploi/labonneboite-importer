@@ -4,7 +4,7 @@ function ver() {
     printf "%04d%04d%04d%04d" ${1//./ }
 }
 
-function run() {
+function runit() {
     set -e
     sudo -u "#${AIRFLOW_UID}" \
       --preserve-env=AIRFLOW_HOME,AIRFLOW__CORE__SQL_ALCHEMY_CONN,AIRFLOW__CELERY__RESULT_BACKEND \
@@ -12,7 +12,7 @@ function run() {
     return $?
 }
 
-airflow_version=$(run airflow version)
+airflow_version=$(runit airflow version)
 airflow_version_comparable=$(ver ${airflow_version})
 min_airflow_version=2.2.0
 min_airflow_version_comparable=$(ver ${min_airflow_version})
@@ -78,15 +78,15 @@ chown -R "${AIRFLOW_UID}:0" /var/output
 # run entry point once
 CONNECTION_CHECK_MAX_COUNT=1 bash -x /entrypoint airflow version
 
-run airflow variables import /sources/importer/settings/default.json;
-run airflow variables import /sources/importer/settings/docker.json;
+runit airflow variables import /sources/importer/settings/default.json;
+runit airflow variables import /sources/importer/settings/docker.json;
 
-run airflow connections list --conn-id fs_default | grep fs_default > /dev/null \
-  || run airflow connections add fs_default --conn-type fs
+runit airflow connections list --conn-id fs_default | grep fs_default > /dev/null \
+  || runit airflow connections add fs_default --conn-type fs
 
-run airflow connections list --conn-id mysql_importer | grep mysql_importer > /dev/null \
-  && run airflow connections delete mysql_importer
-run airflow connections add mysql_importer \
+runit airflow connections list --conn-id mysql_importer | grep mysql_importer > /dev/null \
+  && runit airflow connections delete mysql_importer
+runit airflow connections add mysql_importer \
     --conn-host ${IMPORTER_MYSQL_HOST:-importer-mysql} \
     --conn-login ${IMPORTER_MYSQL_LOGIN:-importer} \
     --conn-password ${IMPORTER_MYSQL_PASSWORD:-importer} \
@@ -94,9 +94,9 @@ run airflow connections add mysql_importer \
     --conn-schema importer \
     --conn-type mysql
 
-run airflow connections list --conn-id http_address | grep http_address > /dev/null \
-  || run airflow connections add http_address --conn-uri https://api-adresse.data.gouv.fr/
+runit airflow connections list --conn-id http_address | grep http_address > /dev/null \
+  || runit airflow connections add http_address --conn-uri https://api-adresse.data.gouv.fr/
 
 pushd /sources
-  run alembic -c importer/settings/alembic.ini upgrade head
+  runit poetry run alembic -c importer/settings/alembic.ini upgrade head
 popd
