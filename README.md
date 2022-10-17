@@ -63,7 +63,6 @@ access : https://127.0.0.1:8080/ (HTTP_PORT may be changed in .env)
 | POSTGRES_PASSWORD              | airflow               | ...                                                                                                            |
 | IMPORTER_MYSQL_HOST            | importer-mysql        | db info of the importer database                                                                               |
 | IMPORTER_MYSQL_PORT            | 3306                  | ...                                                                                                            |
-| IMPORTER_MYSQL_SCHEMA          | importer              | ...                                                                                                            |
 | IMPORTER_MYSQL_ROOT_PASSWORD   | importer              | ...                                                                                                            |
 | IMPORTER_MYSQL_PASSWORD        | importer              | ...                                                                                                            |
 | IMPORTER_MYSQL_LOGIN           | importer              | ...                                                                                                            |
