@@ -25,13 +25,13 @@
 #
 # Feel free to modify this file to suit your needs.
 ---
-version: '3.7'
+version: '3'
 
 x-airflow-common:
-  &airflow-common
   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
+  &airflow-common
   image: importer/airflow
   build:
     context: ./
@@ -93,8 +93,17 @@ services:
       MYSQL_USER: ${IMPORTER_MYSQL_LOGIN:-importer}
     restart: unless-stopped
     healthcheck:
-      # test: ["CMD", "mysqladmin" ,"ping", "--user=$$MYSQL_USER", "--password=$$MYSQL_PASSWORD", "-h", "localhost"]
-      test: ["CMD", "mysqladmin" ,"ping", "--user=importer", "--password=importer", "-h", "localhost"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "--user=$$MYSQL_USER",
+          "--password=$$MYSQL_PASSWORD",
+          "-h",
+          "localhost"
+        ]
+      # test: ["CMD", "mysqladmin" ,"ping", "--user=importer", "--password=importer", "-h", "localhost"]
       interval: 5s
       retries: 5
 
@@ -111,6 +120,7 @@ services:
 
   airflow-init:
     <<: *airflow-common
+    working_dir: /sources
     entrypoint: /bin/bash ./docker/entrypoints/test.sh
     # yamllint enable rule:line-length
     environment:
@@ -127,8 +137,7 @@ services:
       # for test results
       - testResults:/sources/testResults
 
-
 # the volume to collect testResults xml files should be defined like this
 volumes:
-  testResults: 
+  testResults:
     external: true

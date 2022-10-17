@@ -16,7 +16,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.10"
 # labonneboite dependency
-labonneboite-common = "0.3.0"
+labonneboite-common = "0.5.1"
 
 redis = "^4.3.1"
 celery="^5.2.7"

@@ -35,7 +35,7 @@ x-airflow-common:
   image: importer/airflow
   build:
     context: ./
-    dockerfile: ./airflow/Dockerfile
+    dockerfile: ./docker/Dockerfile
   environment:
     &airflow-common-env
     AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
@@ -64,6 +64,7 @@ x-airflow-common:
       condition: service_healthy
 
 services:
+
   postgres:
     image: postgres:13
     environment:
@@ -202,11 +203,8 @@ services:
 
   airflow-init:
     <<: *airflow-common
-    entrypoint: /bin/bash
-    # yamllint disable rule:line-length
-    command:
-      - /sources/init.sh
-    # yamllint enable rule:line-length
+    working_dir: /sources
+    entrypoint: /bin/bash ./docker/entrypoints/init.sh
     environment:
       <<: *airflow-common-env
       AIRFLOW_UID: ${AIRFLOW_UID:-50000}
@@ -216,7 +214,6 @@ services:
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
     user: "0:0"
     volumes:
-      - .:/sources
       - ${WORK_DIR:-./importer/var/work}:/var/work
       - ${OUTPUT_DIR:-./importer/var/output}:/var/output
 
@@ -238,8 +235,6 @@ services:
     profiles:
       - debug
     working_dir: /sources
-    volumes:
-      - .:/sources
     entrypoint:
       - alembic
       - -c
