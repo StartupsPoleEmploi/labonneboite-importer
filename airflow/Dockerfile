@@ -1,4 +1,4 @@
-FROM apache/airflow:2.2.4-python3.9
+FROM apache/airflow:slim-latest-python3.10
 
 USER root
 
@@ -10,7 +10,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         git \
         libpq-dev \
         gcc \
-        bzip2
+        bzip2 \
+        default-libmysqlclient-dev
 
 #ADD dags-airflow /opt/airflow/dags
 
@@ -22,11 +23,11 @@ RUN chown -R "airflow:root" \
 # USER ${AIRFLOW_UID}
 USER airflow
 
-RUN ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip install --upgrade pip && \
-    ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip install pip-tools
+RUN pip install --upgrade pip && \
+    pip install pip-tools
 
 COPY requirements.txt /requirements.txt
 
-RUN ${AIRFLOW_USER_HOME_DIR}/.local/bin/pip-sync /requirements.txt
+RUN pip-sync /requirements.txt
 
 
