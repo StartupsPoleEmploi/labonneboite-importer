@@ -45,10 +45,11 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.9.11
+      - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.9.11"
+          cache: pip
+          python-version-file: '.python-version'
 
       - name: Cache pip
         id: cache-pip
