@@ -125,7 +125,9 @@ services:
     # yamllint enable rule:line-length
     environment:
       <<: *airflow-common-env
-
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
     volumes:
       # for test results
       - testResults:/sources/testResults

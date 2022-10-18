@@ -2,6 +2,14 @@
 set -e
 
 # init tests
+airflow variables import ./importer/settings/default.json
+airflow connections add mysql_importer \
+    --conn-host ${IMPORTER_MYSQL_HOST:-importer-mysql} \
+    --conn-login ${IMPORTER_MYSQL_LOGIN:-importer} \
+    --conn-password ${IMPORTER_MYSQL_PASSWORD:-importer} \
+    --conn-port ${IMPORTER_MYSQL_PORT:-3306} \
+    --conn-schema ${IMPORTER_MYSQL_SCHEMA:-importer} \
+    --conn-type mysql
 poetry run alembic -c importer/settings/alembic.ini upgrade head
 
 # run the tests
