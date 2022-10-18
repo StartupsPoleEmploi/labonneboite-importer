@@ -7,7 +7,7 @@ function ver() {
 function runit() {
     set -e
     sudo -u "#${AIRFLOW_UID}" \
-      --preserve-env=AIRFLOW_HOME,AIRFLOW__CORE__SQL_ALCHEMY_CONN,AIRFLOW__CELERY__RESULT_BACKEND \
+      --preserve-env=AIRFLOW_HOME,AIRFLOW__DATABASE__SQL_ALCHEMY_CONN,AIRFLOW__CELERY__RESULT_BACKEND \
       $(which ${1:-airflow}) ${@:2}
     return $?
 }
