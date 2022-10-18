@@ -21,7 +21,7 @@ This projet use an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load)
 ### dev
 
 - pyenv
-  - python3.8.13 (installé via `make init`)
+  - python3.10 (installé via `make init`)
 - lib de dev (ou `devel`)
   - sqlite3 (`libsqlite3-dev`)
   - mysqlclient (`libmysqlclient-dev`)
@@ -30,22 +30,8 @@ This projet use an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load)
 
 ## Developement
 
-init local env :
-
 ```
-make init
-```
-
-If the init fail you may have to rebuild all without condition:
-
-```
-make init --always-make
-```
-
-start local env :
-
-```
-make startserver
+make develop
 ```
 
 access : https://127.0.0.1:8080/ (HTTP_PORT may be changed in .env)
@@ -77,3 +63,9 @@ access : https://127.0.0.1:8080/ (HTTP_PORT may be changed in .env)
 # Run project
 
 See deploy function in the [.execute shell script](./.execute.sh#L70)
+
+## Testing
+
+```
+make test
+```

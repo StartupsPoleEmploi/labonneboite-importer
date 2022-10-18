@@ -45,7 +45,8 @@ x-airflow-common:
     IMPORTER_MYSQL_PORT: ${IMPORTER_MYSQL_PORT:-3306}
     IMPORTER_MYSQL_LOGIN: ${IMPORTER_MYSQL_LOGIN:-importer}
     IMPORTER_MYSQL_PASSWORD: ${IMPORTER_MYSQL_PASSWORD:-importer}
-    IMPORTER_MYSQL_SCHEMA: importer
+    IMPORTER_MYSQL_SCHEMA: ${IMPORTER_MYSQL_SCHEMA:-importer}
+
   volumes:
     - ./importer/dags:/opt/airflow/dags:ro
     - ./importer/plugins:/opt/airflow/plugins:ro

@@ -118,22 +118,15 @@ services:
       retries: 50
     restart: unless-stopped
 
-  airflow-init:
+  airflow-tests:
     <<: *airflow-common
     working_dir: /sources
     entrypoint: /bin/bash ./docker/entrypoints/test.sh
     # yamllint enable rule:line-length
     environment:
       <<: *airflow-common-env
-      AIRFLOW_UID: ${AIRFLOW_UID:-50000}
-      _AIRFLOW_DB_UPGRADE: 'true'
-      _AIRFLOW_WWW_USER_CREATE: 'true'
-      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
-    user: "0:0"
+
     volumes:
-      - ${WORK_DIR:-./importer/var/work}:/var/work
-      - ${OUTPUT_DIR:-./importer/var/output}:/var/output
       # for test results
       - testResults:/sources/testResults
 

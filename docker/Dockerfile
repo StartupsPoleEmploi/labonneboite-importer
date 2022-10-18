@@ -14,6 +14,9 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     gcc \
     bzip2
 
+# airflow 
+COPY docker/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+
 # copy sources
 COPY . /sources
 
@@ -26,6 +29,10 @@ USER airflow
 
 WORKDIR /sources
 
-RUN pip install poetry \ 
+RUN pip install  poetry \ 
+    # && poetry config virtualenvs.create false \
     && PIP_USER=0 poetry install
+# && pip install  --requirement <(poetry export --format requirements.txt)
+
+
 
