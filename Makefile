@@ -27,6 +27,10 @@ UID	:= $(shell id -u)
 
 .DEFAULT_GOAL := helprm in
 
+develop: 
+	docker-compose -f docker-compose.yml down \
+	&& docker-compose -f docker-compose.yml up --build
+
 all: init build startserver  ## init and start the local server
 
 # Init

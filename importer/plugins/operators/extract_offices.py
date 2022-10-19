@@ -14,7 +14,7 @@ from sqlalchemy import ColumnDefault
 
 from common.types import Context
 from models import ExportableOffice
-from utils.csv import SemiColonDialect
+from utils import SemiColonDialect
 from utils.get_departement_from_zipcode import get_department_from_zipcode
 from utils.mysql_hook import MySqlHookOnDuplicateKey
 

@@ -35,7 +35,7 @@ x-airflow-common:
   image: importer/airflow
   build:
     context: ./
-    dockerfile: ./airflow/Dockerfile
+    dockerfile: ./docker/Dockerfile
   environment:
     &airflow-common-env
     AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
@@ -245,20 +245,20 @@ services:
       - -c
       - importer/settings/alembic.ini
 
-  flower:
-    <<: *airflow-common
-    command: celery flower
-    healthcheck:
-      test: [ "CMD", "curl", "--fail", "http://localhost:5555/" ]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-    restart: unless-stopped
-    ports:
-      - ${FLOWER_HTTP_PORT:-5555}:5555
-    depends_on:
-      <<: *airflow-common-depends-on
-      airflow-worker:
-        condition: service_started
-      airflow-init:
-        condition: service_completed_successfully
+  # flower:
+  #   <<: *airflow-common
+  #   command: celery flower
+  #   healthcheck:
+  #     test: [ "CMD", "curl", "--fail", "http://localhost:5555/" ]
+  #     interval: 10s
+  #     timeout: 10s
+  #     retries: 5
+  #   restart: unless-stopped
+  #   ports:
+  #     - ${FLOWER_HTTP_PORT:-5555}:5555
+  #   depends_on:
+  #     <<: *airflow-common-depends-on
+  #     airflow-worker:
+  #       condition: service_started
+  #     airflow-init:
+  #       condition: service_completed_successfully
