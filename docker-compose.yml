@@ -234,13 +234,12 @@ services:
     <<: *airflow-common
     profiles:
       - debug
-    working_dir: /sources
     volumes:
-      - .:/sources
+      - ./importer:/opt/airflow
     entrypoint:
       - alembic
       - -c
-      - importer/settings/alembic.ini
+      - ./settings/alembic.ini
   
   flower:
     <<: *airflow-common

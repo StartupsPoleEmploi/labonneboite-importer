@@ -19,24 +19,13 @@ This projet use an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load)
 - pg_config (`libpq-dev` / ubuntu)
 
 ### dev
+- make
+- docker
+- python3.10
+- poetry
 
-- pyenv
-  - python3.10 (installé via `make init`)
-- lib de dev (ou `devel`)
-  - sqlite3 (`libsqlite3-dev`)
-  - mysqlclient (`libmysqlclient-dev`)
-  - ffi (`libffi-dev`)
-- gcc-11 (pour installer compiler python avec la `libffi`)
 
-## Developement
-
-```
-make develop
-```
-
-access : https://127.0.0.1:8080/ (`HTTP_PORT` may be changed in .env) with creds : airflow / airflow (from `_AIRFLOW_WWW_USER_USERNAME` and `_AIRFLOW_WWW_USER_PASSWORD`)
-
-# Environment variable
+## Environment variable
 
 | Var name                       | Default               | Note                                                                                                           |
 |--------------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------|
@@ -59,12 +48,7 @@ access : https://127.0.0.1:8080/ (`HTTP_PORT` may be changed in .env) with creds
 | _AIRFLOW_WWW_USER_PASSWORD     | airflow               | Only used on the 1st init                                                                                      |
 | AIRFLOW__WEBSERVER__SECRET_KEY | supersecret           | See [airflow config](https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html#secret-key) |
 
-# Run project
+## Deployment
 
 See deploy function in the [.execute shell script](./.execute.sh#L70)
 
-## Testing
-
-```
-make test
-```
