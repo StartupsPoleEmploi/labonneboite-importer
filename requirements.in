@@ -1,6 +1,0 @@
-apache-airflow==2.2.4 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.2.4/constraints-3.8.txt"
-apache-airflow-providers-mysql --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.2.4/constraints-3.8.txt"
-psycopg2
-redis
-celery<=5.1.2  # click deps
-labonneboite-common==0.5.3

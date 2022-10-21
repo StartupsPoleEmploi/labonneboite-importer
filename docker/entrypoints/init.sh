@@ -1,4 +1,4 @@
-set -ex
+set -e
 
 function ver() {
     printf "%04d%04d%04d%04d" ${1//./ }
@@ -7,7 +7,7 @@ function ver() {
 function run() {
     set -e
     sudo -u "#${AIRFLOW_UID}" \
-      --preserve-env=AIRFLOW_HOME,AIRFLOW__CORE__SQL_ALCHEMY_CONN,AIRFLOW__CELERY__RESULT_BACKEND \
+      --preserve-env=AIRFLOW_HOME,AIRFLOW__DATABASE__SQL_ALCHEMY_CONN,AIRFLOW__CELERY__RESULT_BACKEND \
       $(which ${1:-airflow}) ${@:2}
     return $?
 }
@@ -65,9 +65,9 @@ if [[ ${warning_resources} == "true" ]]; then
     echo "   https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html#before-you-begin"
     echo
 fi
-mkdir -p /sources/airflow/opt/airflow/logs
-chown -R "${AIRFLOW_UID}:0" \
-  /sources/airflow/opt/airflow/logs
+mkdir -p ${AIRFLOW_HOME}/logs
+# chown -R "${AIRFLOW_UID}:0" \
+#   /opt/airflow/logs
 
 mkdir -p /var/work
 chown -R "${AIRFLOW_UID}:0" /var/work
@@ -78,8 +78,8 @@ chown -R "${AIRFLOW_UID}:0" /var/output
 # run entry point once
 CONNECTION_CHECK_MAX_COUNT=1 bash -x /entrypoint airflow version
 
-run airflow variables import /sources/importer/settings/default.json;
-run airflow variables import /sources/importer/settings/docker.json;
+run airflow variables import ${AIRFLOW_HOME}/settings/default.json;
+run airflow variables import ${AIRFLOW_HOME}/settings/docker.json;
 
 run airflow connections list --conn-id fs_default | grep fs_default > /dev/null \
   || run airflow connections add fs_default --conn-type fs
@@ -97,6 +97,5 @@ run airflow connections add mysql_importer \
 run airflow connections list --conn-id http_address | grep http_address > /dev/null \
   || run airflow connections add http_address --conn-uri https://api-adresse.data.gouv.fr/
 
-pushd /sources
-  run alembic -c importer/settings/alembic.ini upgrade head
-popd
+run alembic -c ${AIRFLOW_HOME}/settings/alembic.ini upgrade head
+
