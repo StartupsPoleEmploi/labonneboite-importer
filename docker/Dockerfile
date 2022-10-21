@@ -29,7 +29,7 @@ RUN chown -R "airflow:root" \
 USER airflow
 
 RUN pip install --upgrade pip && \
-    pip install poetry==1.1.15 && \
+    pip install poetry && \
     pip install --user --requirement <(poetry export --format requirements.txt)
 
 # copy source code
