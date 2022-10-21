@@ -57,7 +57,7 @@ access : https://127.0.0.1:8080/ (`HTTP_PORT` may be changed in .env) with creds
 | ENV_TYPE                       | production            | -                                                                                                              |
 | _AIRFLOW_WWW_USER_USERNAME     | airflow               | Only used on the 1st init                                                                                      |
 | _AIRFLOW_WWW_USER_PASSWORD     | airflow               | Only used on the 1st init                                                                                      |
-| AIRFLOW__WEBSERVER__SECRET_KEY |                       | See [airflow config](https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html#secret-key) |
+| AIRFLOW__WEBSERVER__SECRET_KEY | supersecret           | See [airflow config](https://airflow.apache.org/docs/apache-airflow/stable/configurations-ref.html#secret-key) |
 
 # Run project
 
