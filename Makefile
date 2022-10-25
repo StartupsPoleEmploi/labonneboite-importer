@@ -6,6 +6,11 @@ develop:
 	docker-compose -f docker-compose.yml down \
 	&& docker-compose -f docker-compose.yml up --build
 
+setup:
+# for linux : https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#setting-the-right-airflow-user
+	mkdir airflow airflow/opt airflow/opt/airflow airflow/opt/airflow/logs
+	echo -e "AIRFLOW_UID=$(id -u)" > .env
+
 test:
 	docker volume create --name=testResults
 	docker-compose -f docker-compose.testing.yml up --build --abort-on-container-exit
