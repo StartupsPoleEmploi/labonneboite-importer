@@ -3,7 +3,7 @@
 # local test importer
 airflow/airflow.db
 airflow/airflow-webserver.pid
-airflow/logs
+airflow/opt
 
 airflow/webserver_config.py
 
