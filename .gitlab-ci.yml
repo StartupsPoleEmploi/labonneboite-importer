@@ -7,7 +7,7 @@ include:
 python-tests:
   extends: .devops::test
   before_script:
-    - apt upgrade && apt install make -y
+    - apt-get upgrade && apt-get install make -y
   script:
     - make test
   rules:
