@@ -13,6 +13,7 @@ python-tests:
     - whoami
     - echo "AIRFLOW_UID=1000" > .env
   script:
+    - whoami
     - docker-compose -f docker-compose.testing.yml build
     - docker-compose -f docker-compose.testing.yml run tests;
   rules:
