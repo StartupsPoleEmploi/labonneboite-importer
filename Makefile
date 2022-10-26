@@ -14,9 +14,11 @@ setup:
 	echo "AIRFLOW_UID=${UID}" > .env
 
 test:
-	docker volume create --name=testResults
-	docker-compose -f docker-compose.testing.yml up --build --abort-on-container-exit
-	docker run --rm -v testResults:/testResults -v $(PWD):/backup busybox tar -zcvf /backup/testResults.tar.gz /testResults
+	docker-compose -f docker-compose.testing.yml up --build --abort-on-container-exit; \
+	r=$$?; \
+	docker run --rm -v testResults:/testResults -v ${PWD}:/backup busybox tar -zcvf /backup/testResults.tar.gz /testResults; \
+	exit $$r
+
 
 # migration
 
