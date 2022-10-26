@@ -7,7 +7,9 @@ include:
 python-tests:
   extends: .devops::test
   script:
-    - echo "AIRFLOW_UID=0" > .env
+    - useradd -u 1000 test_user
+    - su test_user
+    - echo "AIRFLOW_UID=1000" > .env
     - docker-compose -f docker-compose.testing.yml build
     - docker-compose -f docker-compose.testing.yml run tests;
   rules:
