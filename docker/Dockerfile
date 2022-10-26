@@ -28,7 +28,6 @@ RUN pip install poetry && \
 
 # add entry points and make them runnable
 COPY docker/entrypoints ${AIRFLOW_HOME}/entrypoints
-RUN cd ${AIRFLOW_HOME}/entrypoints && find . -exec chmod +x '{}' \;
 
 # copy source code
 COPY ./importer ${AIRFLOW_HOME}/
