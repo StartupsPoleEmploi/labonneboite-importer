@@ -65,9 +65,9 @@ if [[ ${warning_resources} == "true" ]]; then
     echo "   https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html#before-you-begin"
     echo
 fi
+
 mkdir -p ${AIRFLOW_HOME}/logs
-# chown -R "${AIRFLOW_UID}:0" \
-#   /opt/airflow/logs
+chown -R "${AIRFLOW_UID}:0" ${AIRFLOW_HOME}/logs
 
 mkdir -p /var/work
 chown -R "${AIRFLOW_UID}:0" /var/work

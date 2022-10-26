@@ -207,7 +207,6 @@ services:
     # yamllint enable rule:line-length
     environment:
       <<: *airflow-common-env
-      AIRFLOW_UID: ${AIRFLOW_UID:-50000}
       _AIRFLOW_DB_UPGRADE: 'true'
       _AIRFLOW_WWW_USER_CREATE: 'true'
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
