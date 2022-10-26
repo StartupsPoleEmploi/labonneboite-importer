@@ -23,10 +23,10 @@ then
 fi
 
 # -- type checking
-# if ! mypy --junit-xml ./mypy.xml .
-# then
-#     failed "mypy";
-# fi
+if ! mypy --junit-xml ./mypy.xml .
+then
+    failed "mypy";
+fi
 
 # -- unit test & coverage
 # -- api
