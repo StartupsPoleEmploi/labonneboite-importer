@@ -6,11 +6,13 @@ include:
 # this should be the local file
 python-tests:
   extends: .devops::test
-  script:
-    - useradd -u 1000 test_user
-    - su test_user
+  before_script:
+    # add a fake user 1000 for airflow to work properly
+    - useradd -u 1000 fake_user
+    - su fake_user
     - whoami
     - echo "AIRFLOW_UID=1000" > .env
+  script:
     - docker-compose -f docker-compose.testing.yml build
     - docker-compose -f docker-compose.testing.yml run tests;
   rules:
