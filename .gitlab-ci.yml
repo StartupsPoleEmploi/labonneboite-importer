@@ -9,6 +9,7 @@ python-tests:
   script:
     - useradd -u 1000 test_user
     - su test_user
+    - whoami
     - echo "AIRFLOW_UID=1000" > .env
     - docker-compose -f docker-compose.testing.yml build
     - docker-compose -f docker-compose.testing.yml run tests;
