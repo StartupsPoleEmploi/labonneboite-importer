@@ -36,6 +36,8 @@ x-airflow-common:
   build:
     context: ./
     dockerfile: ./docker/Dockerfile
+    args: 
+      CUSTOM_UID : ${AIRFLOW_UID}
   environment:
     &airflow-common-env
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
@@ -51,7 +53,7 @@ x-airflow-common:
     - ${INPUT_DIR:-./importer/var/input}:/var/input
     - ${WORK_DIR:-./importer/var/work}:/var/work
     - ${OUTPUT_DIR:-./importer/var/output}:/var/output
-  user: "${AIRFLOW_UID:-50000}:0"
+  user: "airflow"
   depends_on:
     &airflow-common-depends-on
     redis:

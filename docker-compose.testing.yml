@@ -36,6 +36,9 @@ x-airflow-common:
   build:
     context: ./
     dockerfile: ./docker/Dockerfile
+    args: 
+      CUSTOM_UID : ${AIRFLOW_UID}
+
   environment:
     &airflow-common-env
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
@@ -116,16 +119,36 @@ services:
       retries: 50
     restart: unless-stopped
 
-  airflow-test:
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    # yamllint disable rule:line-length
+    command:
+      - ./entrypoints/init.sh
+    # yamllint enable rule:line-length
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+    user: "0:0"
+    volumes:
+      - ${WORK_DIR:-./importer/var/work}:/var/work
+      - ${OUTPUT_DIR:-./importer/var/output}:/var/output
+
+  tests:
     <<: *airflow-common
     entrypoint: /bin/bash
     command:
       - ./entrypoints/test.sh
-    # user must be airflow because it's the one with the packages installed in user
-    user : "airflow"
     volumes:
       # for test results
-      - testResults:/sources/testResults
+      - ./testResults:/opt/airflow/testResults
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
  
 
 # the volume to collect testResults xml files should be defined like this

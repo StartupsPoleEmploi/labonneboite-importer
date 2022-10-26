@@ -13,13 +13,15 @@ setup:
 	mkdir -p airflow/opt/airflow/logs
 	echo "AIRFLOW_UID=${UID}" > .env
 
-test:
-	docker-compose -f docker-compose.testing.yml up --build --abort-on-container-exit; \
-	r=$$?; \
-	docker run --rm -v testResults:/testResults -v ${PWD}:/backup busybox tar -zcvf /backup/testResults.tar.gz /testResults; \
-	exit $$r
+test: setup
+
+	mkdir -p ./testResults
+
+	docker-compose -f docker-compose.testing.yml build;
+	docker-compose -f docker-compose.testing.yml run tests;
 
 
+	
 # migration
 
 MIGRATION_MESSAGE	?=

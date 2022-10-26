@@ -23,3 +23,4 @@ docker-compose.override.yml
 webserver_config.py
 importer/logs
 testResults.tar.gz
+testResults

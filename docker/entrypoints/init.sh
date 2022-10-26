@@ -6,7 +6,7 @@ function ver() {
 
 function run() {
     set -e
-    sudo -u "#${AIRFLOW_UID}" \
+    sudo -u "airflow" \
       --preserve-env=AIRFLOW_HOME,AIRFLOW__DATABASE__SQL_ALCHEMY_CONN,AIRFLOW__CELERY__RESULT_BACKEND \
       $(which ${1:-airflow}) ${@:2}
     return $?
