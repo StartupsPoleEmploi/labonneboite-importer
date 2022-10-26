@@ -13,10 +13,9 @@ setup:
 	mkdir -p airflow/opt/airflow/logs
 	echo "AIRFLOW_UID=${UID}" > .env
 
-test: setup
+test:
 
 	mkdir -p ./testResults
-
 	docker-compose -f docker-compose.testing.yml build;
 	docker-compose -f docker-compose.testing.yml run tests;
 
