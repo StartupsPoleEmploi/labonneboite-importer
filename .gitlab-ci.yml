@@ -6,7 +6,7 @@ include:
 # this should be the local file
 python-tests:
   extends: .devops::test
-  # image: docker:dind
+  image: docker:dind
   # services:
   #   - docker:dind-rootless
   # variables:
