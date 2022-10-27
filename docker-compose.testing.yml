@@ -37,7 +37,7 @@ x-airflow-common:
     context: ./
     dockerfile: ./docker/Dockerfile
     args: 
-      CUSTOM_UID : ${AIRFLOW_UID}
+      CUSTOM_UID : ${AIRFLOW_UID:-50000}
 
   environment:
     &airflow-common-env
@@ -140,6 +140,7 @@ services:
   tests:
     <<: *airflow-common
     entrypoint: /bin/bash
+    user: airflow
     command:
       - ./entrypoints/test.sh
     volumes:
