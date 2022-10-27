@@ -14,12 +14,11 @@ setup:
 	echo "AIRFLOW_UID=${UID}" > .env
 
 test: setup
-	mkdir -p ./testResults
+	docker volume create --name=testResults
 	docker-compose -f docker-compose.testing.yml build;
 	docker-compose -f docker-compose.testing.yml run tests;
+	docker run --rm -v testResults:/testResults -v $(PWD):/backup busybox tar -zcvf /backup/testResults.tar.gz /testResults
 
-
-	
 # migration
 
 MIGRATION_MESSAGE	?=
@@ -28,3 +27,4 @@ migration:
 
 migrate-down:
 	docker-compose run --rm -u "${UID}" -e HOME=/home/airflow/ alembic-cli downgrade -1
+

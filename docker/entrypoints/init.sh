@@ -66,15 +66,6 @@ if [[ ${warning_resources} == "true" ]]; then
     echo
 fi
 
-mkdir -p ${AIRFLOW_HOME}/logs
-chown -R "${AIRFLOW_UID}:0" ${AIRFLOW_HOME}/logs
-
-mkdir -p /var/work
-chown -R "${AIRFLOW_UID}:0" /var/work
-
-mkdir -p /var/output
-chown -R "${AIRFLOW_UID}:0" /var/output
-
 # run entry point once
 CONNECTION_CHECK_MAX_COUNT=1 bash -x /entrypoint airflow version
 

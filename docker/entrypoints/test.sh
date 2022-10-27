@@ -42,12 +42,7 @@ fi
 echo "Moving test results file..."
 
 ls -l .
-mkdir -p ./testResults
-chown -R airflow ./testResults
 mv *.xml  ./testResults
-
-cd testResults
-
 
 echo "Done"
 

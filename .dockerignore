@@ -4,5 +4,6 @@ venv/
 postgres/var/lib/postgresql/
 importer-mysql/var/lib/mysql/data/
 
-import/var/input
-import/var/output
+importer/var/input
+importer/var/output
+airflow/opt/airflow/opt

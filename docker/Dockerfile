@@ -21,9 +21,8 @@ COPY pyproject.toml ${AIRFLOW_HOME}/pyproject.toml
 COPY poetry.lock ${AIRFLOW_HOME}/poetry.lock
 
 # grant access to /opt/airflow to user airflow
-RUN usermod -u ${CUSTOM_UID} airflow
-RUN chown -R "airflow:root" \
-    /opt/airflow/
+COPY docker/permissions.sh ./permissions.sh
+RUN chmod +x ./permissions.sh && ./permissions.sh
 
 
 USER airflow

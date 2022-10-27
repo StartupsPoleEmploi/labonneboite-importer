@@ -144,7 +144,7 @@ services:
       - ./entrypoints/test.sh
     volumes:
       # for test results
-      - ./testResults:/opt/airflow/testResults
+      - testResults:/opt/airflow/testResults
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
