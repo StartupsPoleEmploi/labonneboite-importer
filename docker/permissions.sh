@@ -2,10 +2,11 @@
 set -e
 
 # MUST BE RUN BEFORE SWITCHING TO airflow USER
-if [ $CUSTOM_UID -gt 0 ]; then
-    usermod -u ${CUSTOM_UID} airflow
+if [[ "$CUSTOM_UID" != "" ]]; then
+    if [ $CUSTOM_UID -gt 0 ]; then
+        usermod -u ${CUSTOM_UID} airflow
+    fi
 fi
-
 chown -R "airflow:root" ${AIRFLOW_HOME}
 
 mkdir -p ${AIRFLOW_HOME}/testResults
