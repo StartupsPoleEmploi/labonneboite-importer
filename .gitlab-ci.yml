@@ -6,10 +6,16 @@ include:
 # this should be the local file
 python-tests:
   extends: .devops::test
-  image: docker:dind-rootless
+  image: docker:dind
+  services:
+    - docker:dind-rootless
   variables:
     DOCKER_COMPOSE_FILENAME: docker-compose.testing.yml
     DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+
   before_script:
     - docker info
   script:
