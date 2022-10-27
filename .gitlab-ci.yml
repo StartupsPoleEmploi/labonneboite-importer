@@ -6,8 +6,14 @@ include:
 # this should be the local file
 python-tests:
   extends: .devops::test
+  image: docker:dind-rootless
+  variables:
+    DOCKER_COMPOSE_FILENAME: docker-compose.testing.yml
+    DOCKER_HOST: tcp://docker:2376
+  before_script:
+    - docker info
   script:
-    - echo "AIRFLOW_UID=50000" > .env
+    - echo "AIRFLOW_UID=${UID}" > .env
     - docker volume create --name=testResults
     - docker-compose -f docker-compose.testing.yml build
     - docker-compose -f docker-compose.testing.yml run tests
