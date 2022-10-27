@@ -6,25 +6,7 @@ include:
 # this should be the local file
 python-tests:
   extends: .devops::test
-  # image: docker:dind
-  # services:
-  #   - docker:dind-rootless
-  # variables:
-  #   DOCKER_COMPOSE_FILENAME: docker-compose.testing.yml
-  #   DOCKER_HOST: tcp://docker:2376
-  #   DOCKER_TLS_CERTDIR: "/certs"
-  #   DOCKER_TLS_VERIFY: 1
-  #   DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-
-  before_script:
-    - docker info
-    - addgroup --gid 1000 builder
-    # - useradd --uid 1000 --gid 1000 --groups docker --home-dir /home/builder -m builder
-    - useradd --uid 1000 --gid 1000 --home-dir /home/builder -m builder
-    - su 1000
-
   script:
-    - echo $UID
     - echo "AIRFLOW_UID=${UID}" > .env
     - docker volume create --name=testResults
     - docker-compose -f docker-compose.testing.yml build
