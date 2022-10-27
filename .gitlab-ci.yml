@@ -19,8 +19,7 @@ python-tests:
   before_script:
     - docker info
   script:
-    - echo ${UID}
-    - echo "AIRFLOW_UID=${UID}" > .env
+    - echo "AIRFLOW_UID=1000" > .env
     - docker volume create --name=testResults
     - docker-compose -f docker-compose.testing.yml build
     - docker-compose -f docker-compose.testing.yml run tests
