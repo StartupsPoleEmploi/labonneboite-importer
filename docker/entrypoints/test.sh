@@ -39,10 +39,10 @@ fi
 
 
 # prepare test results
-echo "Moving test results file..."
+echo "Cannot move test results file because of user permission issue. :')"
 
-ls -l .
-mv *.xml  ./testResults
+# ls -l .
+# mv *.xml  ./testResults
 
 echo "Done"
 
