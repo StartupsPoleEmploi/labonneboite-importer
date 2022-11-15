@@ -29,9 +29,6 @@ sonarqube:
         - importer/**/*
         - pyproject.toml
 
-pypi:
-  extends: .devops::pypi-publish
-
 # recette
 build-rec:
   extends: .devops::build
