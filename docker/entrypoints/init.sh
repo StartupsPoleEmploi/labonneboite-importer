@@ -6,7 +6,7 @@ function ver() {
 
 function run() {
     set -e
-    sudo -u "#${AIRFLOW_UID}" \
+    sudo -u "airflow" \
       --preserve-env=AIRFLOW_HOME,AIRFLOW__DATABASE__SQL_ALCHEMY_CONN,AIRFLOW__CELERY__RESULT_BACKEND \
       $(which ${1:-airflow}) ${@:2}
     return $?
@@ -65,15 +65,6 @@ if [[ ${warning_resources} == "true" ]]; then
     echo "   https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html#before-you-begin"
     echo
 fi
-
-mkdir -p ${AIRFLOW_HOME}/logs
-chown -R "${AIRFLOW_UID}:0" ${AIRFLOW_HOME}/logs
-
-mkdir -p /var/work
-chown -R "${AIRFLOW_UID}:0" /var/work
-
-mkdir -p /var/output
-chown -R "${AIRFLOW_UID}:0" /var/output
 
 # run entry point once
 CONNECTION_CHECK_MAX_COUNT=1 bash -x /entrypoint airflow version

@@ -1,0 +1,49 @@
+# this part should be common and maintained in another repo
+include:
+  - project: lbb/devops/devops-jobs
+    file: devops.gitlab-ci.yml
+
+# this should be the local file
+python-tests:
+  extends: .devops::test
+  variables:
+    DOCKER_COMPOSE_FILENAME: docker-compose.testing.yml
+    FIX_COVERAGE_FOR_SONAR: "false"
+  rules:
+    - if: $CI_MERGE_REQUEST_IID && $CI_MERGE_REQUEST_TITLE !~ /Draft.*/
+      changes:
+        - importer/**/*
+        - pyproject.toml
+    - if: ( $CI_COMMIT_BRANCH == "main" &&   $CI_PIPELINE_SOURCE != 'schedule' )
+      changes:
+        - labonneboite/**/*
+        - pyproject.toml
+
+sonarqube:
+  extends: .devops::sonarqube
+  needs:
+    - job: python-tests
+  rules:
+    - if: ( $CI_COMMIT_BRANCH == "main"  &&   $CI_PIPELINE_SOURCE != 'schedule' )
+      changes:
+        - importer/**/*
+        - pyproject.toml
+
+# recette
+build-rec:
+  extends: .devops::build
+  variables:
+    DOCKER_FILE: ${CI_PROJECT_DIR}/docker/Dockerfile
+
+release-rec:
+  extends: .devops::release-recette
+  variables:
+    TARGET_ENV: importer
+# production
+# promote-prod:
+#   extends: .devops::promote
+
+# release-prod:
+#   extends: .devops::release-prod
+# variables:
+# TARGET_ENV: importer

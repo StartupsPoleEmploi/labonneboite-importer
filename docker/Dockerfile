@@ -1,8 +1,11 @@
+
+
 FROM apache/airflow:slim-2.4.2-python3.10
 
 USER root
 
 ARG AIRFLOW_HOME=/opt/airflow
+ARG CUSTOM_UID=50000
 
 # setup environment
 RUN export DEBIAN_FRONTEND=noninteractive && \
@@ -18,8 +21,9 @@ COPY pyproject.toml ${AIRFLOW_HOME}/pyproject.toml
 COPY poetry.lock ${AIRFLOW_HOME}/poetry.lock
 
 # grant access to /opt/airflow to user airflow
-RUN chown -R "airflow:root" \
-    /opt/airflow/
+COPY docker/permissions.sh ./permissions.sh
+RUN chmod +x ./permissions.sh && ./permissions.sh
+
 
 USER airflow
 
@@ -28,7 +32,6 @@ RUN pip install poetry && \
 
 # add entry points and make them runnable
 COPY docker/entrypoints ${AIRFLOW_HOME}/entrypoints
-RUN cd ${AIRFLOW_HOME}/entrypoints && find . -exec chmod +x '{}' \;
 
 # copy source code
 COPY ./importer ${AIRFLOW_HOME}/
