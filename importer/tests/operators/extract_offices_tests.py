@@ -8,7 +8,7 @@ import _csv
 from airflow.hooks.filesystem import FSHook
 from airflow.providers.mysql.hooks.mysql import MySqlHook
 
-from common.types import Context
+from common.custom_types import Context
 from operators.extract_offices import ExtractOfficesOperator, Office, FIELDS
 
 TEST_DIR = join(dirname(dirname(dirname(__file__))), 'tests')
@@ -20,10 +20,21 @@ VALID_HEADER = 'siret;raisonsociale;enseigne;codenaf;numerorue;libellerue;codeco
 def create_office(siret: str = '00000000001941', **overloaded_kwargs: Any) -> Office:
     kwargs: Dict[str, Any]
 
-    kwargs = dict(raisonsociale='ASS MUSARAILE', enseigne='', codenaf='9312Z',
-                  numerorue='5', libellerue='SQUARE GEORGES GUYON', codecommune='94046',
-                  codepostal='94700', email='', tel='0143565222', trancheeffectif='NULL', website='',
-                  flag_poe_afpr='0', flag_pmsmp='0', flag_junior='NULL', flag_senior='NULL',
+    kwargs = dict(raisonsociale='ASS MUSARAILE',
+                  enseigne='',
+                  codenaf='9312Z',
+                  numerorue='5',
+                  libellerue='SQUARE GEORGES GUYON',
+                  codecommune='94046',
+                  codepostal='94700',
+                  email='',
+                  tel='0143565222',
+                  trancheeffectif='NULL',
+                  website='',
+                  flag_poe_afpr='0',
+                  flag_pmsmp='0',
+                  flag_junior='NULL',
+                  flag_senior='NULL',
                   flag_handicap='NULL')
     kwargs.update(**overloaded_kwargs)
 
@@ -31,12 +42,7 @@ def create_office(siret: str = '00000000001941', **overloaded_kwargs: Any) -> Of
 
 
 def create_office_with_default() -> Office:
-    return create_office(
-        trancheeffectif=None,
-        flag_junior=False,
-        flag_senior=False,
-        flag_handicap=False
-    )
+    return create_office(trancheeffectif=None, flag_junior=False, flag_senior=False, flag_handicap=False)
 
 
 class OfficeTestCase(TestCase):
@@ -48,8 +54,8 @@ class OfficeTestCase(TestCase):
 
 
 class TestExtractOfficesOperator(TestCase):
-    office_filename = join(TEST_DIR, 'data', 'lbb-output-wf-202202150303-extracted',
-                           'etablissements', 'etablissements.csv')
+    office_filename = join(TEST_DIR, 'data', 'lbb-output-wf-202202150303-extracted', 'etablissements',
+                           'etablissements.csv')
 
     def execute(self, _mysql_hook: Optional[MySqlHook] = None, offices_filename: Optional[str] = None) -> int:
         mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
@@ -63,15 +69,18 @@ class TestExtractOfficesOperator(TestCase):
                                           _mysql_hook=mock_mysql_hook)
         return operator.execute(Context())
 
-    def execute_with_file_content(self, _mysql_hook: Optional[MySqlHook] = None, header: str = VALID_HEADER,
+    def execute_with_file_content(self,
+                                  _mysql_hook: Optional[MySqlHook] = None,
+                                  header: str = VALID_HEADER,
                                   **overloaded_values: str) -> int:
         file_content = create_office(**overloaded_values)
-        csv_fields = map(str,
-                         [file_content.siret, file_content.raisonsociale, file_content.enseigne, file_content.codenaf,
-                          file_content.numerorue, file_content.libellerue, file_content.codecommune,
-                          file_content.codepostal, file_content.email, file_content.tel, file_content.trancheeffectif,
-                          file_content.website, file_content.flag_poe_afpr, file_content.flag_pmsmp,
-                          file_content.flag_junior, file_content.flag_senior, file_content.flag_handicap])
+        csv_fields = map(str, [
+            file_content.siret, file_content.raisonsociale, file_content.enseigne, file_content.codenaf,
+            file_content.numerorue, file_content.libellerue, file_content.codecommune, file_content.codepostal,
+            file_content.email, file_content.tel, file_content.trancheeffectif, file_content.website,
+            file_content.flag_poe_afpr, file_content.flag_pmsmp, file_content.flag_junior, file_content.flag_senior,
+            file_content.flag_handicap
+        ])
 
         def add_quote(field: str) -> str:
             if ';' in field:
@@ -212,14 +221,12 @@ class TestExtractOfficesOperator(TestCase):
 
         self.execute(_mysql_hook=mock_mysql_hook)
 
-        mock_mysql_hook.get_records.assert_called_once_with(
-            'SELECT siret FROM test_table'
-        )
+        mock_mysql_hook.get_records.assert_called_once_with('SELECT siret FROM test_table')
         mock_mysql_hook.run.assert_called_once()
         expected_query_1 = 'DELETE FROM `test_table` WHERE `siret` IN ("51837000000001", "51837000000002")'
         expected_query_2 = 'DELETE FROM `test_table` WHERE `siret` IN ("51837000000002", "51837000000001")'
-        if (mock_mysql_hook.run.call_args != call([expected_query_1]) and mock_mysql_hook.run.call_args != call(
-                [expected_query_2])):
+        if (mock_mysql_hook.run.call_args != call([expected_query_1])
+                and mock_mysql_hook.run.call_args != call([expected_query_2])):
             self.fail(f"Extra companies should be delete, got :\n{mock_mysql_hook.run.call_args}")
 
     def test_execute_don_t_delete_not_expired_sirets(self) -> None:

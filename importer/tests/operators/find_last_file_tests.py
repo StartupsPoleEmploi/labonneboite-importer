@@ -9,7 +9,7 @@ from operators.find_last_file import FindLastFileOperator
 from airflow.exceptions import AirflowSkipException
 from airflow.hooks.filesystem import FSHook
 from airflow.models.dag import DAG
-from common.types import Context
+from common.custom_types import Context
 from pendulum import DateTime, UTC  # type: ignore
 from datetime import timedelta
 
@@ -27,24 +27,20 @@ class TestFindLastFileOperator(TestCase):
 
     @staticmethod
     def _get_context() -> Context:
-        context: Context = Context(
-            prev_data_interval_start_success=START_DATE,
-            prev_data_interval_end_success=LAST_RUN_DATE,
-            data_interval_start=LAST_RUN_DATE,
-            data_interval_end=CURRENT_RUN_DATE,
-            dag=MagicMock(DAG, start_date=START_DATE)
-        )
+        context: Context = Context(prev_data_interval_start_success=START_DATE,
+                                   prev_data_interval_end_success=LAST_RUN_DATE,
+                                   data_interval_start=LAST_RUN_DATE,
+                                   data_interval_end=CURRENT_RUN_DATE,
+                                   dag=MagicMock(DAG, start_date=START_DATE))
         return context
 
     @staticmethod
     def _get_1st_run_context() -> Context:
-        context: Context = Context(
-            prev_data_interval_start_success=None,
-            prev_data_interval_end_success=None,
-            data_interval_start=START_DATE,
-            data_interval_end=CURRENT_RUN_DATE,
-            dag=MagicMock(DAG, start_date=START_DATE)
-        )
+        context: Context = Context(prev_data_interval_start_success=None,
+                                   prev_data_interval_end_success=None,
+                                   data_interval_start=START_DATE,
+                                   data_interval_end=CURRENT_RUN_DATE,
+                                   dag=MagicMock(DAG, start_date=START_DATE))
         return context
 
     @staticmethod
@@ -98,8 +94,7 @@ class TestFindLastFileOperator(TestCase):
             self.assertEqual(
                 expected_result, result,
                 'if previous data run is not set (no previous succes) the start date should be use to retrieve the '
-                'last file'
-            )
+                'last file')
 
     def test(self) -> None:
         with tempfile.TemporaryDirectory() as filepath:

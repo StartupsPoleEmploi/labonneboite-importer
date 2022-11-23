@@ -12,7 +12,7 @@ from labonneboite_common.departements import DEPARTEMENTS
 from labonneboite_common.siret import is_siret
 from sqlalchemy import ColumnDefault
 
-from common.types import Context
+from common.custom_types import Context
 from models import ExportableOffice
 from utils import SemiColonDialect
 from utils.get_departement_from_zipcode import get_department_from_zipcode
@@ -23,23 +23,8 @@ from utils.mysql_hook import MySqlHookOnDuplicateKey
 # and need to extract data again
 
 FIELDS = [
-    "siret",
-    "raisonsociale",
-    "enseigne",
-    "codenaf",
-    "trancheeffectif",
-    "numerorue",
-    "libellerue",
-    "codepostal",
-    "tel",
-    "email",
-    "website",
-    "flag_junior",
-    "flag_senior",
-    "flag_handicap",
-    "codecommune",
-    "departement",
-    "flag_poe_afpr",
+    "siret", "raisonsociale", "enseigne", "codenaf", "trancheeffectif", "numerorue", "libellerue", "codepostal", "tel",
+    "email", "website", "flag_junior", "flag_senior", "flag_handicap", "codecommune", "departement", "flag_poe_afpr",
     "flag_pmsmp"
 ]
 
@@ -164,8 +149,8 @@ class Office(NamedTuple):
         return errors
 
     @staticmethod
-    def _check_string_field(
-            column: 'sqla.Column[Text]', column_type: sqla.String, value: Optional[str]) -> Collection[str]:
+    def _check_string_field(column: 'sqla.Column[Text]', column_type: sqla.String,
+                            value: Optional[str]) -> Collection[str]:
         if value is None:
             pass
         elif column_type.length is not None and len(value) > column_type.length:
@@ -186,8 +171,7 @@ class ExtractOfficesOperator(BaseOperator):
                  chunk_size: int = 100000,
                  _fs_hook: Optional[FSHook] = None,
                  _mysql_hook: Optional[MySqlHookOnDuplicateKey] = None,
-                 **kwargs: Any
-                 ):
+                 **kwargs: Any):
         self.offices_filename = offices_filename
         self.destination_table = destination_table
         self.fs_conn_id = fs_conn_id
@@ -254,12 +238,10 @@ class ExtractOfficesOperator(BaseOperator):
         """
         create new offices (that are not yet in our etablissement table)
         """
-        self._get_mysql_hook().insert_rows(self.destination_table, [
-            [
-                getattr(office, key) for key in FIELDS
-            ]
-            for office in csv_offices.values()
-        ], FIELDS, on_duplicate_key_update=True)
+        self._get_mysql_hook().insert_rows(
+            self.destination_table, [[getattr(office, key) for key in FIELDS] for office in csv_offices.values()],
+            FIELDS,
+            on_duplicate_key_update=True)
 
     @staticmethod
     def check_fields() -> Tuple[bool, Tuple[str, ...]]:
@@ -294,12 +276,7 @@ class ExtractOfficesOperator(BaseOperator):
     def _get_dict_reader(self, my_file: Iterable[str]) -> Iterable[Dict[str, str]]:
         reader: Iterable[Dict[str, str]]
 
-        reader = csv.DictReader(
-            my_file,
-            Office._fields,
-            restkey=self.__class__.REST_KEY,
-            dialect=SemiColonDialect
-        )
+        reader = csv.DictReader(my_file, Office._fields, restkey=self.__class__.REST_KEY, dialect=SemiColonDialect)
 
         return reader
 
