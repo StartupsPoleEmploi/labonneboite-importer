@@ -9,7 +9,7 @@ from airflow.models.baseoperator import BaseOperator
 from pendulum.datetime import DateTime
 from pendulum.tz.timezone import UTC
 
-from common.types import Context
+from common.custom_types import Context
 
 TimeIntervale = Tuple[DateTime, DateTime]
 
@@ -22,7 +22,11 @@ class FindLastFileOperator(BaseOperator):
     """
     template_fields = ["filepath"]
 
-    def __init__(self, *args: Any, filepath: str, fs_conn_id: str = 'fs_default', _fshook: Optional[FSHook] = None,
+    def __init__(self,
+                 *args: Any,
+                 filepath: str,
+                 fs_conn_id: str = 'fs_default',
+                 _fshook: Optional[FSHook] = None,
                  **kwargs: Any):
         self.filepath = filepath
         self.fs_conn_id = fs_conn_id
@@ -41,8 +45,7 @@ class FindLastFileOperator(BaseOperator):
         for path in paths:
             file_modification_ts = os.path.getmtime(path)
             file_modification_dt = DateTime.fromtimestamp(  # type: ignore [no-untyped-call]
-                file_modification_ts, tz=UTC
-            )
+                file_modification_ts, tz=UTC)
             if time_intervale[0] <= file_modification_dt < time_intervale[1]:
                 print(f"Found {path} modifed on {file_modification_dt}")
                 yield path, file_modification_dt
