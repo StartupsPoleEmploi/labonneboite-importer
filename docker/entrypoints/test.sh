@@ -1,10 +1,10 @@
 # /bin/bash
 
-testReturn=1
+testReturn=0
 
 failed() {
 # you cannot make the exit code 0 otherwie you disable the extraction done after the execution of this script
-    testReturn=0
+    testReturn=1
     echo "FAILED $1"
 }
 
@@ -30,7 +30,7 @@ fi
 
 # -- unit test & coverage
 # -- api
-if pytest --junitxml=pytest.xml --cov
+if pytest --junitxml=pytest.xml --cov ${TEST_FILES}
 then
     coverage xml
 else
@@ -39,11 +39,9 @@ fi
 
 
 # prepare test results
-echo "Cannot move test results file because of user permission issue. :')"
-
-# ls -l .
-# mv *.xml  ./testResults
-
+echo "Moving test results file..."
+mkdir -p testResults
+mv -f *.xml ./testResults
 echo "Done"
 
 exit $testReturn

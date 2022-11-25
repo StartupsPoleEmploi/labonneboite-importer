@@ -1,4 +1,4 @@
-# /bin/bash
+#!/bin/bash
 set -e
 
 # MUST BE RUN BEFORE SWITCHING TO airflow USER
