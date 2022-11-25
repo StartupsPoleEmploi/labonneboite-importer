@@ -1,10 +1,10 @@
 # /bin/bash
 
-testReturn=1
+testReturn=0
 
 failed() {
 # you cannot make the exit code 0 otherwie you disable the extraction done after the execution of this script
-    testReturn=0
+    testReturn=1
     echo "FAILED $1"
 }
 

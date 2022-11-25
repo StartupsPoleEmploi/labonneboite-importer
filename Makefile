@@ -13,11 +13,21 @@ setup:
 	mkdir -p airflow/opt/airflow/logs
 	echo "AIRFLOW_UID=${UID}" > .env
 
-test: setup
+setup-test:
 	docker volume create --name=testResults
-	docker-compose -f docker-compose.testing.yml build;
-	docker-compose -f docker-compose.testing.yml run tests;
+	docker-compose -f docker-compose.testing.yml build
+
+tearDown-test:
 	docker run --rm -v testResults:/testResults -v $(PWD):/backup busybox tar -zcvf /backup/testResults.tar.gz /testResults
+	docker-compose -f docker-compose.testing.yml down
+	docker volume rm testResults;
+
+test: setup setup-test
+	$(MAKE) test-run; r=$$?; \
+		$(MAKE) tearDown-test; exit $$r
+
+test-run:
+	TEST_FILES=${TEST_FILES} docker-compose -f docker-compose.testing.yml run --rm tests
 
 # migration
 
