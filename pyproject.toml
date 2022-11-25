@@ -73,6 +73,7 @@ exclude_lines =[
 omit = [
     "*/test*",
     "*/migrations/*",
+    "*/alembic/*",
     "manage.py",
     "venv/*"
     ]
