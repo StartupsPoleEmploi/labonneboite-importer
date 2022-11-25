@@ -14,15 +14,14 @@ setup:
 # for linux : https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#setting-the-right-airflow-user
 	mkdir -p airflow/opt/airflow/logs
 	echo "AIRFLOW_UID=${UID}" > .env
+	mkdir -p testResults
+	chmod 777 testResults
 
 setup-test:
-	docker volume create --name=testResults
 	docker-compose -f docker-compose.testing.yml build
 
 tearDown-test:
-	docker run --rm -v testResults:/testResults -v $(PWD):/backup busybox tar -zcvf /backup/testResults.tar.gz /testResults
 	docker-compose -f docker-compose.testing.yml down
-	docker volume rm testResults;
 
 test: setup setup-test
 	$(MAKE) test-run; r=$$?; \

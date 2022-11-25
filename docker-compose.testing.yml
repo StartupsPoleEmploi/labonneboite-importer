@@ -141,7 +141,7 @@ services:
       - ./entrypoints/test.sh
     volumes:
       # for test results
-      - testResults:/opt/airflow/testResults
+      - ./testResults:/opt/airflow/testResults
     environment:
       <<: *airflow-common-env
       TEST_FILES: ${TEST_FILES:-}
@@ -150,7 +150,4 @@ services:
       testing_airflow-init:
         condition: service_completed_successfully
 
-# the volume to collect testResults xml files should be defined like this
-volumes:
-  testResults:
-    external: true
+
