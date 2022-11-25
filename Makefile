@@ -1,4 +1,6 @@
 UID	:= $(shell id -u)
+TEST_FILES   =
+
 
 help:
 	poetry install --only help
