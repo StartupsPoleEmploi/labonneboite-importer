@@ -1,4 +1,6 @@
 UID	:= $(shell id -u)
+TEST_FILES   =
+
 
 help:
 	poetry install --only help
@@ -12,12 +14,21 @@ setup:
 # for linux : https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#setting-the-right-airflow-user
 	mkdir -p airflow/opt/airflow/logs
 	echo "AIRFLOW_UID=${UID}" > .env
+	mkdir -p testResults
+	chmod 777 testResults
 
-test: setup
-	docker volume create --name=testResults
-	docker-compose -f docker-compose.testing.yml build;
-	docker-compose -f docker-compose.testing.yml run tests;
-	docker run --rm -v testResults:/testResults -v $(PWD):/backup busybox tar -zcvf /backup/testResults.tar.gz /testResults
+setup-test:
+	docker-compose -f docker-compose.testing.yml build
+
+tearDown-test:
+	docker-compose -f docker-compose.testing.yml down
+
+test: setup setup-test
+	$(MAKE) test-run; r=$$?; \
+		$(MAKE) tearDown-test; exit $$r
+
+test-run:
+	TEST_FILES=${TEST_FILES} docker-compose -f docker-compose.testing.yml run --rm tests
 
 # migration
 

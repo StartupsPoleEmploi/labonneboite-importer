@@ -36,36 +36,35 @@ x-airflow-common:
   build:
     context: ./
     dockerfile: ./docker/Dockerfile
-    args: 
-      CUSTOM_UID : ${AIRFLOW_UID:-50000}
+    args:
+      CUSTOM_UID: ${AIRFLOW_UID:-50000}
 
   environment:
     &airflow-common-env
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
-    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@testing_postgres/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@testing_postgres/airflow
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
-    IMPORTER_MYSQL_HOST: ${IMPORTER_MYSQL_HOST:-importer-mysql}
+    IMPORTER_MYSQL_HOST: ${IMPORTER_MYSQL_HOST:-testing_importer-mysql}
     IMPORTER_MYSQL_PORT: ${IMPORTER_MYSQL_PORT:-3306}
     IMPORTER_MYSQL_LOGIN: ${IMPORTER_MYSQL_LOGIN:-importer}
     IMPORTER_MYSQL_PASSWORD: ${IMPORTER_MYSQL_PASSWORD:-importer}
     IMPORTER_MYSQL_SCHEMA: importer
   volumes:
-    - ./airflow/opt/airflow/logs:/opt/airflow/logs
     - ${INPUT_DIR:-./importer/var/input}:/var/input
     - ${WORK_DIR:-./importer/var/work}:/var/work
     - ${OUTPUT_DIR:-./importer/var/output}:/var/output
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
-    redis:
+    testing_redis:
       condition: service_healthy
-    postgres:
+    testing_postgres:
       condition: service_healthy
-    importer-mysql:
+    testing_importer-mysql:
       condition: service_healthy
 
 services:
-  postgres:
+  testing_postgres:
     image: postgres:13
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-airflow}
@@ -73,18 +72,15 @@ services:
       POSTGRES_DB: airflow
     expose:
       - 5432
-    volumes:
-      - ./postgres/var/lib/postgresql/data/:/var/lib/postgresql/data/
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "airflow" ]
+      test: [ "CMD", "pg_isready", "-U", "$${POSTGRES_USER}" ]
       interval: 5s
       retries: 5
     restart: unless-stopped
 
-  importer-mysql:
+  testing_importer-mysql:
     image: mariadb:10.5.9-focal
     volumes:
-      - ./importer-mysql/var/lib/mysql/data:/var/lib/mysql/data
       - ./importer-mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     expose:
       - 3306
@@ -108,7 +104,7 @@ services:
       interval: 5s
       retries: 5
 
-  redis:
+  testing_redis:
     image: redis:latest
     expose:
       - 6379
@@ -119,7 +115,7 @@ services:
       retries: 50
     restart: unless-stopped
 
-  airflow-init:
+  testing_airflow-init:
     <<: *airflow-common
     entrypoint: /bin/bash
     # yamllint disable rule:line-length
@@ -145,14 +141,13 @@ services:
       - ./entrypoints/test.sh
     volumes:
       # for test results
-      - testResults:/opt/airflow/testResults
+      - ./testResults:/opt/airflow/testResults
+    environment:
+      <<: *airflow-common-env
+      TEST_FILES: ${TEST_FILES:-}
     depends_on:
       <<: *airflow-common-depends-on
-      airflow-init:
+      testing_airflow-init:
         condition: service_completed_successfully
- 
 
-# the volume to collect testResults xml files should be defined like this
-volumes:
-  testResults:
-    external: true
+
