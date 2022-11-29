@@ -36,8 +36,8 @@ x-airflow-common:
   build:
     context: ./
     dockerfile: ./docker/Dockerfile
-    args: 
-      CUSTOM_UID : ${AIRFLOW_UID}
+    args:
+      CUSTOM_UID: ${AIRFLOW_UID}
   environment:
     &airflow-common-env
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
@@ -99,8 +99,8 @@ services:
           "CMD",
           "mysqladmin",
           "ping",
-          "--user=$$MYSQL_USER",
-          "--password=$$MYSQL_PASSWORD",
+          "--user=$IMPORTER_MYSQL_LOGIN",
+          "--password=$IMPORTER_MYSQL_PASSWORD",
           "-h",
           "localhost"
         ]
@@ -241,7 +241,7 @@ services:
       - alembic
       - -c
       - ./settings/alembic.ini
-  
+
   flower:
     <<: *airflow-common
     command: celery flower

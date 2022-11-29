@@ -52,11 +52,12 @@ release-rec:
   extends: .devops::release-recette
   variables:
     TARGET_ENV: importer
+    
 # production
-# promote-prod:
-#   extends: .devops::promote
+promote-prod:
+  extends: .devops::promote
 
-# release-prod:
-#   extends: .devops::release-prod
-# variables:
-# TARGET_ENV: importer
+release-prod:
+  extends: .devops::release-prod
+  variables:
+    TARGET_ENV: importer

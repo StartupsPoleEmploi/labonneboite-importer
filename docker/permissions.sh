@@ -11,13 +11,16 @@ chown -R "airflow:root" ${AIRFLOW_HOME}
 
 mkdir -p ${AIRFLOW_HOME}/testResults
 chown -R "airflow:root" ${AIRFLOW_HOME}/testResults
-chmod 777 ${AIRFLOW_HOME}/testResults
+chmod 766 ${AIRFLOW_HOME}/testResults
 
 mkdir -p ${AIRFLOW_HOME}/logs
 chown -R "airflow:root" ${AIRFLOW_HOME}/logs
+chmod 766 ${AIRFLOW_HOME}/logs
 
 mkdir -p /var/work
 chown -R "airflow:root" /var/work
+chmod 766 /var/work
 
 mkdir -p /var/output
 chown -R "airflow:root" /var/output
+chmod 766 /var/output
