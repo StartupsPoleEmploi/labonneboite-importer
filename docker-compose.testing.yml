@@ -96,8 +96,8 @@ services:
           "CMD",
           "mysqladmin",
           "ping",
-          "--user=$$MYSQL_USER",
-          "--password=$$MYSQL_PASSWORD",
+          "--user=$IMPORTER_MYSQL_LOGIN",
+          "--password=$IMPORTER_MYSQL_LOGIN",
           "-h",
           "localhost"
         ]
