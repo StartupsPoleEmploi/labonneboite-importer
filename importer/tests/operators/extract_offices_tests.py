@@ -57,7 +57,10 @@ class TestExtractOfficesOperator(TestCase):
     office_filename = join(TEST_DIR, 'data', 'lbb-output-wf-202202150303-extracted', 'etablissements',
                            'etablissements.csv')
 
-    def execute(self, _mysql_hook: Optional[MySqlHook] = None, offices_filename: Optional[str] = None) -> int:
+    def execute(self,
+                _mysql_hook: Optional[MySqlHook] = None,
+                offices_filename: Optional[str] = None,
+                max_lines_to_treat: Optional[int] = None) -> int:
         mock_fs_hook = MagicMock(FSHook, get_path=Mock(return_value="/"))
         mock_mysql_hook = _mysql_hook or MagicMock(MySqlHook)
         offices_filename = offices_filename or self.office_filename
@@ -65,6 +68,7 @@ class TestExtractOfficesOperator(TestCase):
                                           destination_table='test_table',
                                           task_id="test_task",
                                           chunk_size=5,
+                                          max_lines_to_treat=max_lines_to_treat,
                                           _fs_hook=mock_fs_hook,
                                           _mysql_hook=mock_mysql_hook)
         return operator.execute(Context())
@@ -265,6 +269,11 @@ class TestExtractOfficesOperator(TestCase):
         nb_inserted_sirets = self.execute_with_file_content(raisonsociale='"quoted name', _mysql_hook=mock_mysql_hook)
 
         self.assertEqual(0, nb_inserted_sirets)
+
+    def test_execute_should_limit_rows(self) -> None:
+        nb_inserted_sirets = self.execute(max_lines_to_treat=1)
+
+        self.assertEqual(1, nb_inserted_sirets)
 
     @skipUnless(os.path.exists(join(TEST_DIR, 'data', 'huge_test.csv')), 'huge_test doesn\'t exists')
     def test_file_with_huge_file(self) -> None:

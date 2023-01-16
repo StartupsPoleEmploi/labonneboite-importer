@@ -1,5 +1,6 @@
 import datetime
 from pathlib import Path
+from typing import Optional
 
 from airflow.models.variable import Variable
 from airflow.operators.bash import BashOperator
@@ -24,6 +25,10 @@ fs_hook_path = Path('/{{ conn.fs_default.schema }}')
 data_path = fs_hook_path / Variable.get('data_path', default_var='/var/input')
 work_path = fs_hook_path / Variable.get('work_path', default_var='/var/work')
 output_path = fs_hook_path / Variable.get('output_path', default_var='/var/output')
+max_lines_to_treat: Optional[int] = Variable.get('max_lines_to_treat', default_var=None, deserialize_json=True)
+if not isinstance(max_lines_to_treat, int):
+    max_lines_to_treat = None
+
 filepath = data_path / Variable.get('etab_file_glob')
 working_tmp_dir = work_path / 'tmp' / "{{ ts_nodash }}"
 offices_path = str(working_tmp_dir / "etablissements" / "etablissements.csv")
@@ -74,6 +79,7 @@ with DAG("load-etablissements-2022-04",
             task_id='extract_offices',
             destination_table='etablissements_raw',
             offices_filename=offices_path,
+            max_lines_to_treat=max_lines_to_treat,
         )
         office_path_sensor_task >> extract_offices
 
@@ -87,6 +93,7 @@ with DAG("load-etablissements-2022-04",
             task_id="extract_scores",
             destination_table='etablissements_raw',
             hiring_filename=scores_path,
+            max_lines_to_treat=max_lines_to_treat,
         )
         score_path_sensor_task >> extract_scores_task
 
