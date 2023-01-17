@@ -139,15 +139,19 @@ services:
     user: airflow
     command:
       - ./entrypoints/test.sh
+      - ${TESTS_PARAM:-}
     volumes:
       # for test results
       - ./testResults:/opt/airflow/testResults
+      - ./importer:/opt/airflow/
+      - ./docker/entrypoints:/opt/airflow/entrypoints
+      - ./pyproject.toml:/opt/airflow/pyproject.toml
+      - ./poetry.lock:/opt/airflow/poetry.lock
     environment:
       <<: *airflow-common-env
       TEST_FILES: ${TEST_FILES:-}
+      TESTS_PARAM: ${TESTS_PARAM:-}
     depends_on:
       <<: *airflow-common-depends-on
       testing_airflow-init:
         condition: service_completed_successfully
-
-
