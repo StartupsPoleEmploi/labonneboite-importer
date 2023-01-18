@@ -18,8 +18,12 @@ class ExtractScoresOperatorWithPresetRows(ExtractScoresOperator):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.test_mysql_hook = MagicMock(MySqlHookOnDuplicateKey)
 
-        super().__init__(*args, task_id='test', hiring_filename='path/test.csv', destination_table=self.TABLE_NAME,
-                         _mysql_hook=self.test_mysql_hook, **kwargs)
+        super().__init__(*args,
+                         task_id='test',
+                         hiring_filename='path/test.csv',
+                         destination_table=self.TABLE_NAME,
+                         _mysql_hook=self.test_mysql_hook,
+                         **kwargs)
         self.rows_retrieved = False
 
     def _open_file(self) -> contextlib.closing[TextIO]:
@@ -31,16 +35,14 @@ class ExtractScoresOperatorWithPresetRows(ExtractScoresOperator):
 
 
 class ExtractScoresOperatorMysqlTestCase(TestCase):
+
     def setUp(self) -> None:
         self.operator = ExtractScoresOperatorWithPresetRows()
         self.operator.execute({})
 
     def assert_called_with_nth_arg(self, arg_number: int, expected_value: Any) -> None:
         self.assertEqual(1, self.operator.test_mysql_hook.insert_rows.call_count)
-        self.assertEqual(
-            expected_value,
-            self.operator.test_mysql_hook.insert_rows.call_args[0][arg_number]
-        )
+        self.assertEqual(expected_value, self.operator.test_mysql_hook.insert_rows.call_args[0][arg_number])
 
     def test_execute_should_retrieve_rows(self) -> None:
         self.assertTrue(self.operator.rows_retrieved)
@@ -72,6 +74,7 @@ class ExtractScoresOperatorMysqlTestCase(TestCase):
 
 
 class ExtractScoresOperatorFsHook(ExtractScoresOperator):
+
     def __init__(self,
                  *args: Any,
                  hiring_filename: str,
@@ -99,10 +102,12 @@ class ExtractScoresOperatorFsHook(ExtractScoresOperator):
 
 
 class ExtractScoresOperatorFileSystemTestCase(TestCase):
+
     def setUp(self) -> None:
         self.fs_hook_mock = MagicMock(FSHook)
         self.fs_hook_mock.get_path = Mock(return_value='/test/')
-        self.operator = ExtractScoresOperatorFsHook(task_id='test', _fs_hook=self.fs_hook_mock,
+        self.operator = ExtractScoresOperatorFsHook(task_id='test',
+                                                    _fs_hook=self.fs_hook_mock,
                                                     hiring_filename='path/score.csv',
                                                     destination_table='table_name')
 
@@ -142,3 +147,12 @@ class ExtractScoresOperatorFileSystemTestCase(TestCase):
         row = next(result_args)
         self.assertEqual(row[0], '1234567')
         self.assertEqual(row[1], '1')
+
+    def test_execute_should_limit_rows(self) -> None:
+        self.operator.max_lines_to_treat = 2
+
+        self.execute(content="1234567;1\n2345678;1\n3456789;1\n4567890;1\n5678901;1\n6789012;1\n")
+
+        result_args = self.operator.last_call_rows
+        nb_save_rows = len(list(result_args))
+        self.assertEqual(nb_save_rows, 1)
