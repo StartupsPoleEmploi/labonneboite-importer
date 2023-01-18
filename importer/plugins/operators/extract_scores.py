@@ -1,5 +1,6 @@
 import contextlib
 import csv
+import itertools
 from pathlib import Path
 from typing import Any, Optional, Iterator, List, Iterable, TextIO
 
@@ -23,6 +24,7 @@ class ExtractScoresOperator(BaseOperator):
                  fs_conn_id: str = 'fs_default',
                  db_conn_id: str = 'mysql_importer',
                  chunk_size: int = 100000,
+                 max_lines_to_treat: Optional[int] = None,
                  _fs_hook: Optional[FSHook] = None,
                  _mysql_hook: Optional[MySqlHookOnDuplicateKey] = None,
                  **kwargs: Any):
@@ -31,6 +33,7 @@ class ExtractScoresOperator(BaseOperator):
         self.fs_conn_id = fs_conn_id
         self.db_conn_id = db_conn_id
         self.chunk_size = chunk_size
+        self.max_lines_to_treat = max_lines_to_treat
         self._fs_hook = _fs_hook
         self._mysql_hook = _mysql_hook
         super().__init__(*args, **kwargs)
@@ -57,7 +60,8 @@ class ExtractScoresOperator(BaseOperator):
     def _insert_rows_with_default_values(self, rows_with_default_values: Iterable[Iterable[Any]]) -> None:
         mysql_hook: MySqlHookOnDuplicateKey = self._get_mysql_hook()
         mysql_hook.insert_rows(
-            self.destination_table, rows_with_default_values,
+            self.destination_table,
+            rows_with_default_values,
             ['siret', 'hiring', 'raisonsociale', 'codenaf', 'codecommune', 'codepostal', 'departement'],
             on_duplicate_key_update=['hiring'])
 
@@ -82,10 +86,14 @@ class ExtractScoresOperator(BaseOperator):
         file = open(path)
         return contextlib.closing(file)
 
-    def _retrieve_rows_in_file(self, file: Iterable[str]) -> Rows:
+    def _read_csv_with_limit(self, file: Iterable[str]) -> Rows:
         csv_reader = csv.reader(file, SemiColonDialect)
-        self._check_rows_header(csv_reader)
-        return csv_reader
+        return itertools.islice(csv_reader, self.max_lines_to_treat)
+
+    def _retrieve_rows_in_file(self, file: Iterable[str]) -> Rows:
+        rows = self._read_csv_with_limit(file)
+        self._check_rows_header(rows)
+        return rows
 
     @staticmethod
     def _check_rows_header(csv_reader: Iterator[List[str]]) -> None:

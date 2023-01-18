@@ -1,5 +1,7 @@
 UID	:= $(shell id -u)
 TEST_FILES   =
+TESTS_PARAM   =
+TEST_WATCH_PARAM = --watch
 
 
 help:
@@ -27,8 +29,11 @@ test: setup setup-test
 	$(MAKE) test-run; r=$$?; \
 		$(MAKE) tearDown-test; exit $$r
 
+test-watch: 
+	$(MAKE) test TESTS_PARAM=${TEST_WATCH_PARAM}
+
 test-run:
-	TEST_FILES=${TEST_FILES} docker-compose -f docker-compose.testing.yml run --rm tests
+	TEST_FILES=${TEST_FILES} TESTS_PARAM=${TESTS_PARAM} docker-compose -f docker-compose.testing.yml run --rm tests
 
 # migration
 

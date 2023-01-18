@@ -169,6 +169,7 @@ class ExtractOfficesOperator(BaseOperator):
                  fs_conn_id: str = 'fs_default',
                  db_conn_id: str = 'mysql_importer',
                  chunk_size: int = 100000,
+                 max_lines_to_treat: Optional[int] = None,
                  _fs_hook: Optional[FSHook] = None,
                  _mysql_hook: Optional[MySqlHookOnDuplicateKey] = None,
                  **kwargs: Any):
@@ -177,6 +178,7 @@ class ExtractOfficesOperator(BaseOperator):
         self.fs_conn_id = fs_conn_id
         self.db_conn_id = db_conn_id
         self.chunk_size = chunk_size
+        self.max_lines_to_treat = max_lines_to_treat
         self._fs_hook = _fs_hook
         self._mysql_hook = _mysql_hook
         super().__init__(*args, **kwargs)
@@ -299,6 +301,10 @@ class ExtractOfficesOperator(BaseOperator):
             office_without_null = Office.without_nulls(**csv_row)
             yield office_without_null
 
+    def _read_offices_with_limit(self) -> Generator[Office, None, None]:
+        offices = self._read_offices()
+        return itertools.islice(offices, self.max_lines_to_treat)
+
     @classmethod
     def map_fields(cls, csv_row: Dict[str, str]) -> Dict[str, str]:
         csv_row['trancheeffectif'] = TRANCHEEFFECTIF_MAP.get(csv_row['trancheeffectif'], csv_row['trancheeffectif'])
@@ -314,7 +320,7 @@ class ExtractOfficesOperator(BaseOperator):
         offices = {}
 
         office: Office
-        for office in self._read_offices():
+        for office in self._read_offices_with_limit():
             if not office.is_valid:
                 self.log.error(f"Invalid office for siret {office.siret} : {', '.join(office.errors)}")
                 continue

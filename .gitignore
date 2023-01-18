@@ -24,3 +24,7 @@ webserver_config.py
 importer/logs
 testResults.tar.gz
 testResults
+
+/importer/flake8.txt
+/importer/poetry.lock
+/importer/pyproject.toml
