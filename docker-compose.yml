@@ -65,6 +65,7 @@ x-airflow-common:
 
 services:
   postgres:
+    hostname: postgres
     image: postgres:13
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-airflow}
