@@ -47,10 +47,10 @@ markdown_extensions:
       emoji_generator: !!python/name:materialx.emoji.to_svg
 
 # Do your stuff below
-site_name: labonneboite-v1-importer
-site_description: "LBB Documentation"
+site_name: La Bonne Boite v1 - Importer
+site_description: "LBB Documentation - Importer"
 site_author: "La Bonne Boite"
-repo_name: labonneboite-importer
+repo_name: lbb-importer
 repo_url: https://git.beta.pole-emploi.fr/lbb/lbb-importer
 
 nav:
